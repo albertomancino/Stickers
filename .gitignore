@@ -1,0 +1,13 @@
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Node / package managers (if ever used locally)
+node_modules/
+npm-debug.log*
+yarn.lock
+package-lock.json
+
+# Build artifacts
+dist/
+coverage/
