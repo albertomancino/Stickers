@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Confronta album</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="wrap">
+    <header class="top">
+      <h1>Confronta album</h1>
+      <div class="top-actions">
+        <button id="btnBackDash" class="ghost small-btn">← Dashboard</button>
+      </div>
+    </header>
+
+    <section class="card">
+      <div class="compare-selects">
+        <div class="field">
+          <label for="myAlbumSelect">Mio album</label>
+          <select id="myAlbumSelect"></select>
+        </div>
+        <div class="field">
+          <label for="friendAlbumSelect">Album amico</label>
+          <select id="friendAlbumSelect"></select>
+          <div class="muted small" id="friendOwner"></div>
+        </div>
+        <div class="field">
+          <label for="searchFilter">Filtro</label>
+          <input id="searchFilter" type="text" placeholder="Cerca numero o titolo" />
+        </div>
+      </div>
+      <div id="warningBanner" class="banner hidden">Attenzione: album con totali diversi. Confronto parziale.</div>
+    </section>
+
+    <section class="card compare-grid">
+      <div>
+        <div class="compare-header">
+          <h3>Le mie doppie (posso dare)</h3>
+        </div>
+        <div id="listOffer" class="list compare-list"></div>
+      </div>
+      <div>
+        <div class="compare-header">
+          <h3>Le doppie dell'amico (può dare)</h3>
+        </div>
+        <div id="listAsk" class="list compare-list"></div>
+      </div>
+    </section>
+
+    <section class="card proposal-card">
+      <div class="compare-header">
+        <h3>Proposta di scambio</h3>
+        <div class="action-buttons">
+          <button id="btnCopyProposal" class="ghost small-btn">Copia proposta</button>
+          <button id="btnExportProposal" class="ghost small-btn">Esporta proposta</button>
+          <button id="btnResetProposal" class="btn-danger small-btn outline">Reset</button>
+        </div>
+      </div>
+      <div class="proposal-grid">
+        <div>
+          <h4>Io do</h4>
+          <div id="proposalGive" class="list compare-list"></div>
+        </div>
+        <div>
+          <h4>Lui dà</h4>
+          <div id="proposalReceive" class="list compare-list"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="storage.js"></script>
+  <script src="catalog.js"></script>
+  <script src="compare.js"></script>
+</body>
+</html>
