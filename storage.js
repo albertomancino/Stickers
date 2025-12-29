@@ -55,6 +55,30 @@ const Storage = {
     return album;
   },
 
+  addFriendAlbum(store, profileId, data) {
+    const friendAlbum = {
+      id: uuid(),
+      profileId,
+      ownerName: data.ownerName || "Sconosciuto",
+      album: { name: data.album.name, total: clampTotal(data.album.total) },
+      stickers: data.stickers || {},
+      importedAt: Date.now()
+    };
+    store.friendAlbums.push(friendAlbum);
+    this.save(store);
+    return friendAlbum;
+  },
+
+  deleteFriendAlbum(store, profileId, friendId) {
+    const idx = store.friendAlbums.findIndex(f => f.id === friendId && f.profileId === profileId);
+    if (idx !== -1) {
+      store.friendAlbums.splice(idx, 1);
+      this.save(store);
+      return true;
+    }
+    return false;
+  },
+
   exportAlbum(store, profileId, albumId, profileName) {
     const album = store.albums.find(a => a.id === albumId && a.profileId === profileId);
     if (!album) return null;
@@ -69,7 +93,25 @@ const Storage = {
       exportedAt: new Date().toISOString(),
       owner: { name: profileName || "" },
       album: { name: album.name, total: album.total },
-      catalogHint: { count: STICKER_CATALOG?.length || 0 },
+      catalogHint: { count: (typeof STICKER_CATALOG !== "undefined" && STICKER_CATALOG.length) ? STICKER_CATALOG.length : 0 },
+      stickers: cleaned
+    };
+  },
+
+  exportFriendAlbum(store, profileId, friendId) {
+    const entry = store.friendAlbums.find(f => f.id === friendId && f.profileId === profileId);
+    if (!entry) return null;
+    const cleaned = {};
+    for (const k in entry.stickers) {
+      const v = entry.stickers[k];
+      if (Number.isInteger(v) && v >= 1) cleaned[k] = v;
+    }
+    return {
+      schema: "panini-trade/v1",
+      exportedAt: new Date().toISOString(),
+      owner: { name: entry.ownerName || "" },
+      album: { name: entry.album.name, total: entry.album.total },
+      catalogHint: { count: (typeof STICKER_CATALOG !== "undefined" && STICKER_CATALOG.length) ? STICKER_CATALOG.length : 0 },
       stickers: cleaned
     };
   },
@@ -92,6 +134,17 @@ const Storage = {
       .replace(/\s+/g, "_")
       .replace(/[^a-zA-Z0-9_.-]/g, "")
       .slice(0, 80) || "album";
+  },
+
+  computeStats(total, stickers) {
+    let owned = 0, dup = 0;
+    for (const k in stickers) {
+      const v = stickers[k];
+      if (v >= 1) owned++;
+      if (v >= 2) dup++;
+    }
+    const missing = total - owned;
+    return { owned, dup, missing };
   },
 
   ensureTrack(store, profileId, albumId, opts) {
@@ -132,7 +185,8 @@ const Storage = {
       profiles: Array.isArray(raw.profiles) ? raw.profiles : [],
       activeProfileId: raw.activeProfileId ?? null,
       albums: Array.isArray(raw.albums) ? raw.albums : [],
-      tracks: (raw.tracks && typeof raw.tracks === "object") ? raw.tracks : {}
+      tracks: (raw.tracks && typeof raw.tracks === "object") ? raw.tracks : {},
+      friendAlbums: Array.isArray(raw.friendAlbums) ? raw.friendAlbums : []
     };
 
     if (!base.profiles.length) {
@@ -177,6 +231,29 @@ const Storage = {
         if (!Number.isInteger(track.current) || track.current < 1) track.current = 1;
         if (track.filter !== "UNRATED") track.filter = "ALL";
         if (!track.stickers || typeof track.stickers !== "object") track.stickers = {};
+      }
+    }
+
+    // clean friend albums
+    base.friendAlbums = base.friendAlbums
+      .filter(f => f && f.profileId && typeof f.album === "object")
+      .map(f => ({
+        id: f.id ?? uuid(),
+        profileId: f.profileId,
+        ownerName: f.ownerName ?? "Sconosciuto",
+        album: {
+          name: f.album?.name ?? "Album importato",
+          total: clampTotal(f.album?.total)
+        },
+        stickers: (f.stickers && typeof f.stickers === "object") ? f.stickers : {},
+        importedAt: f.importedAt ?? Date.now()
+      }));
+
+    // migrate stickers: remove zeros/nulls in friend albums
+    for (const fa of base.friendAlbums) {
+      for (const k in fa.stickers) {
+        const v = fa.stickers[k];
+        if (v === null || v === 0) delete fa.stickers[k];
       }
     }
 

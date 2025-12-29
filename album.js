@@ -20,7 +20,11 @@
     return;
   }
 
-  const album = store.albums.find(a => a.id === albumId && a.profileId === profile.id);
+  const isFriend = params.get("source") === "friend";
+  const friendId = params.get("friendId");
+  const album = isFriend
+    ? store.friendAlbums.find(a => a.id === friendId && a.profileId === profile.id)
+    : store.albums.find(a => a.id === albumId && a.profileId === profile.id);
   if (!album) {
     window.location.href = "dashboard.html?msg=album_deleted";
     return;
@@ -51,6 +55,7 @@
   const elProgressFill = document.getElementById("progressFill");
   const elProgressText = document.getElementById("progressText");
   const elExport = document.getElementById("btnExport");
+  const elFriendBanner = document.getElementById("friendBanner");
 
   document.getElementById("btnBack").onclick = () => window.location.href = "dashboard.html";
   document.getElementById("btnLogout").onclick = () => {
@@ -59,10 +64,13 @@
   };
   if (elExport) {
     elExport.onclick = () => {
-      const payload = Storage.exportAlbum(store, profile.id, album.id, profile.name);
+      const payload = isFriend
+        ? Storage.exportFriendAlbum(store, profile.id, friendId)
+        : Storage.exportAlbum(store, profile.id, album.id, profile.name);
       if (!payload) return;
       const json = JSON.stringify(payload, null, 2);
-      const fname = Storage.sanitizeFileName(`${album.name}_${profile.name}_panini.json`);
+      const fnameBase = isFriend ? `${album.album.name}_${album.ownerName}` : `${album.name}_${profile.name}`;
+      const fname = Storage.sanitizeFileName(`${fnameBase}_panini.json`);
       const blob = new Blob([json], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -103,8 +111,12 @@
     const allowedFilters = new Set(["ALL","MISSING","OWNED","DUPLICATES"]);
     if (!allowedFilters.has(track.filter)) track.filter = "ALL";
 
-    elAlbumName.textContent = album.name;
-    elProfileName.textContent = `Profilo: ${profile.name}`;
+    elAlbumName.textContent = isFriend ? album.album.name : album.name;
+    elProfileName.textContent = isFriend ? `Profilo: ${profile.name}` : `Profilo: ${profile.name}`;
+    if (isFriend && elFriendBanner) {
+      elFriendBanner.textContent = `Album di ${album.ownerName || "Sconosciuto"} (importato)`;
+      elFriendBanner.classList.remove("hidden");
+    }
     elFilterSelect.value = track.filter;
 
     elModeViewer.onclick = () => switchMode("viewer");
@@ -119,6 +131,7 @@
       render();
     };
 
+    if (!isFriend) {
     document.getElementById("btnMissing").onclick = () => setOwned(0, true);
     document.getElementById("btnOwned").onclick = () => setOwned(1, true);
     document.getElementById("btnDup").onclick = () => increment(1, true);
@@ -126,6 +139,15 @@
 
     document.getElementById("qaAddOne").onclick = () => quickAdd("ADD_ONE");
     document.getElementById("qaSetMissing").onclick = () => quickAdd("SET_MISSING");
+    } else {
+      // disable populate actions for friend album
+    }
+
+    if (isFriend) {
+      document.getElementById("populateSection").classList.add("hidden");
+      elModePopulate.classList.add("hidden");
+      elCopyMissing.classList.add("hidden");
+    }
 
     elSearchInput.oninput = (e) => {
       searchTerm = e.target.value.toLowerCase();
@@ -141,7 +163,7 @@
       renderList();
       if (sectionFilter !== "ALL") scrollToSection(sectionFilter);
     };
-    elCopyMissing.onclick = copyMissingList;
+    if (!isFriend) elCopyMissing.onclick = copyMissingList;
 
     // populate sections dropdown
     const sections = computeSectionsOrdered();
