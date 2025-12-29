@@ -15,9 +15,7 @@
   const elWelcome = document.getElementById("welcome");
   const elAlbumsList = document.getElementById("albumsList");
   const elFriendAlbumsList = document.getElementById("friendAlbumsList");
-  const elAlbumName = document.getElementById("albumName");
   const elLogout = document.getElementById("btnLogout");
-  const elCreateAlbum = document.getElementById("btnCreateAlbum");
   const elToast = document.getElementById("toast");
   const elImportBtn = document.getElementById("btnImportAlbum");
   const elImportFile = document.getElementById("importFile");
@@ -30,6 +28,11 @@
   const elModalDup = document.getElementById("modalDup");
   const elBtnCancelImport = document.getElementById("btnCancelImport");
   const elBtnConfirmImport = document.getElementById("btnConfirmImport");
+  const elNewAlbum = document.getElementById("btnNewAlbum");
+  const elCreateModal = document.getElementById("createModal");
+  const elCreateName = document.getElementById("modalCreateName");
+  const elBtnCancelCreate = document.getElementById("btnCancelCreate");
+  const elBtnConfirmCreate = document.getElementById("btnConfirmCreate");
   let pendingImport = null; // holds parsed import until confirm
 
   elWelcome.textContent = `Ciao ${profile.name}`;
@@ -57,9 +60,10 @@
         info.className = "album-info";
         const stats = computeAlbumStats(album);
         const pct = Math.min(100, Math.max(0, (stats.owned / album.total) * 100));
+        const ownerShort = profile.id.slice(0,8);
         info.innerHTML = `
           <div class="album-name">${album.name}</div>
-          <div class="album-owner muted small">Owner: Tu</div>
+          <div class="album-owner muted small">Owner: Tu (${profile.name}) · ${ownerShort}</div>
           <div class="album-stats muted small">Mancanti: ${stats.missing} • Ce l’ho: ${stats.owned}${stats.dup ? ` • Doppie: ${stats.dup}` : ""}</div>
           <div class="progress-track small-track"><div class="progress-fill" style="width:${pct}%;"></div></div>
         `;
@@ -106,9 +110,10 @@
         info.className = "album-info";
         const stats = Storage.computeStats(entry.album.total, entry.stickers);
         const pct = Math.min(100, Math.max(0, (stats.owned / entry.album.total) * 100));
+        const ownerShort = (entry.ownerId || "").slice(0,8);
         info.innerHTML = `
           <div class="album-name">${entry.album.name}</div>
-          <div class="album-owner muted small">Owner: ${entry.ownerName || "Sconosciuto"}</div>
+          <div class="album-owner muted small">Owner: ${entry.ownerName || "Sconosciuto"}${ownerShort ? " · " + ownerShort : ""}</div>
           <div class="album-stats muted small">Mancanti: ${stats.missing} • Ce l’ho: ${stats.owned}${stats.dup ? ` • Doppie: ${stats.dup}` : ""}</div>
           <div class="progress-track small-track"><div class="progress-fill" style="width:${pct}%;"></div></div>
         `;
@@ -142,11 +147,30 @@
     }
   }
 
-  elCreateAlbum.onclick = () => {
-    Storage.createAlbum(store, profile.id, elAlbumName.value);
-    elAlbumName.value = "";
-    renderAlbums();
-  };
+  if (elNewAlbum) {
+    elNewAlbum.onclick = () => {
+      elCreateName.value = "";
+      elCreateModal.classList.remove("hidden");
+      setTimeout(() => elCreateName.focus(), 50);
+    };
+  }
+  if (elBtnCancelCreate) {
+    elBtnCancelCreate.onclick = () => {
+      elCreateModal.classList.add("hidden");
+    };
+  }
+  if (elBtnConfirmCreate) {
+    elBtnConfirmCreate.onclick = () => {
+      const name = elCreateName.value.trim();
+      if (!name) {
+        alert("Inserisci un nome per l'album.");
+        return;
+      }
+      Storage.createAlbum(store, profile.id, name);
+      renderAlbums();
+      elCreateModal.classList.add("hidden");
+    };
+  }
 
   elImportBtn.onclick = () => {
     if (elImportFile) elImportFile.click();
@@ -197,22 +221,52 @@
     }
     const { parsed, ownerName } = pendingImport;
     let name = parsed.album.name.trim();
-    const existing = new Set(
-      store.friendAlbums
-        .filter(f => f.profileId === profile.id && f.ownerName === ownerName)
-        .map(f => f.album.name.toLowerCase())
-    );
-    while (existing.has(name.toLowerCase())) {
-      const next = prompt(`Hai già importato un album chiamato '${name}' di ${ownerName}. Inserisci un nuovo nome per salvarlo:`, name);
-      if (next === null) { pendingImport = null; elModal.classList.add("hidden"); return; }
-      name = next.trim();
-      if (!name) continue;
+    if (parsed.owner.id === profile.id) {
+      // import as my album
+      const existing = new Set(
+        store.albums
+          .filter(a => a.profileId === profile.id)
+          .map(a => a.name.toLowerCase())
+      );
+      while (existing.has(name.toLowerCase())) {
+        const next = prompt(`Esiste già un album chiamato '${name}'. Inserisci un nuovo nome per importarlo:`, name);
+        if (next === null) { pendingImport = null; elModal.classList.add("hidden"); return; }
+        name = next.trim();
+        if (!name) continue;
+      }
+      const newAlbum = Storage.createAlbum(store, profile.id, name, parsed.album.total);
+      const track = store.tracks[profile.id][newAlbum.id];
+      track.stickers = {};
+      if (parsed.stickers && typeof parsed.stickers === "object") {
+        for (const k in parsed.stickers) {
+          const v = parsed.stickers[k];
+          if (Number.isInteger(v) && v >= 1) track.stickers[String(k)] = v;
+        }
+      }
+      track.filter = "ALL";
+      track.viewerSection = "ALL";
+      track.collapsedSections = {};
+      track.currentId = "1";
+    } else {
+      // import as friend album
+      const existing = new Set(
+        store.friendAlbums
+          .filter(f => f.profileId === profile.id && f.ownerId === parsed.owner.id)
+          .map(f => f.album.name.toLowerCase())
+      );
+      while (existing.has(name.toLowerCase())) {
+        const next = prompt(`Hai già importato un album chiamato '${name}' di ${ownerName}. Inserisci un nuovo nome per salvarlo:`, name);
+        if (next === null) { pendingImport = null; elModal.classList.add("hidden"); return; }
+        name = next.trim();
+        if (!name) continue;
+      }
+      Storage.addFriendAlbum(store, profile.id, {
+        ownerName,
+        ownerId: parsed.owner.id,
+        album: { name, total: parsed.album.total },
+        stickers: parsed.stickers
+      });
     }
-    Storage.addFriendAlbum(store, profile.id, {
-      ownerName,
-      album: { name, total: parsed.album.total },
-      stickers: parsed.stickers
-    });
     Storage.save(store);
     showToast("Album importato correttamente ✅");
     renderAlbums();

@@ -14,26 +14,22 @@
     </header>
 
     <section class="card">
-      <h2>I tuoi album</h2>
+      <div class="card-header">
+        <h2>I tuoi album</h2>
+        <button id="btnNewAlbum" class="primary new-album-btn">+ Nuovo album</button>
+      </div>
       <div id="albumsList" class="list"></div>
     </section>
 
     <section class="card">
-      <h2>Album di amici</h2>
+      <div class="card-header">
+        <h2>Album di amici</h2>
+        <div class="action-buttons">
+          <button id="btnImportAlbum" class="ghost small-btn">Importa album</button>
+          <input id="importFile" type="file" accept="application/json" class="hidden" />
+        </div>
+      </div>
       <div id="friendAlbumsList" class="list"></div>
-    </section>
-
-    <section class="card">
-      <h2>Crea un album</h2>
-      <div class="field">
-        <label for="albumName">Nome</label>
-        <input id="albumName" type="text" placeholder="Es. Calciatori 2025/26" />
-      </div>
-      <button id="btnCreateAlbum" class="primary">Crea</button>
-      <div class="actions single" style="margin-top:10px;">
-        <button id="btnImportAlbum" class="ghost">Importa album</button>
-        <input id="importFile" type="file" accept="application/json" class="hidden" />
-      </div>
     </section>
   </main>
 
@@ -54,6 +50,22 @@
       <div class="modal-actions">
         <button id="btnCancelImport" class="ghost small-btn">Annulla</button>
         <button id="btnConfirmImport" class="primary small-btn">Importa</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="createModal" class="modal hidden">
+    <div class="modal-content">
+      <h3>Nuovo album</h3>
+      <div class="modal-body">
+        <div class="field">
+          <label for="modalCreateName">Nome</label>
+          <input id="modalCreateName" type="text" placeholder="Es. Calciatori 2025/26" />
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button id="btnCancelCreate" class="ghost small-btn">Annulla</button>
+        <button id="btnConfirmCreate" class="primary small-btn">Crea</button>
       </div>
     </div>
   </div>

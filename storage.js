@@ -60,6 +60,7 @@ const Storage = {
       id: uuid(),
       profileId,
       ownerName: data.ownerName || "Sconosciuto",
+      ownerId: data.ownerId || "",
       album: { name: data.album.name, total: clampTotal(data.album.total) },
       stickers: data.stickers || {},
       importedAt: Date.now()
@@ -91,7 +92,7 @@ const Storage = {
     return {
       schema: "panini-trade/v1",
       exportedAt: new Date().toISOString(),
-      owner: { name: profileName || "" },
+      owner: { id: profileId, name: profileName || "" },
       album: { name: album.name, total: album.total },
       catalogHint: { count: (typeof STICKER_CATALOG !== "undefined" && STICKER_CATALOG.length) ? STICKER_CATALOG.length : 0 },
       stickers: cleaned
@@ -109,7 +110,7 @@ const Storage = {
     return {
       schema: "panini-trade/v1",
       exportedAt: new Date().toISOString(),
-      owner: { name: entry.ownerName || "" },
+      owner: { id: entry.ownerId || "", name: entry.ownerName || "" },
       album: { name: entry.album.name, total: entry.album.total },
       catalogHint: { count: (typeof STICKER_CATALOG !== "undefined" && STICKER_CATALOG.length) ? STICKER_CATALOG.length : 0 },
       stickers: cleaned
@@ -125,6 +126,9 @@ const Storage = {
     for (const k in data.stickers) {
       const v = data.stickers[k];
       if (!Number.isInteger(v) || v < 1) return { ok: false, error: "Valori sticker non validi." };
+    }
+    if (!data.owner || typeof data.owner.id !== "string" || !data.owner.id.trim()) {
+      return { ok: false, error: "File export vecchio: manca owner.id. Re-esporta con una versione aggiornata." };
     }
     return { ok: true };
   },
@@ -194,6 +198,10 @@ const Storage = {
       base.profiles = [p];
       base.activeProfileId = p.id;
     }
+    // ensure profiles have id
+    for (const p of base.profiles) {
+      if (!p.id) p.id = uuid();
+    }
 
     // clean albums
     base.albums = base.albums
@@ -241,6 +249,7 @@ const Storage = {
         id: f.id ?? uuid(),
         profileId: f.profileId,
         ownerName: f.ownerName ?? "Sconosciuto",
+        ownerId: f.ownerId ?? "",
         album: {
           name: f.album?.name ?? "Album importato",
           total: clampTotal(f.album?.total)

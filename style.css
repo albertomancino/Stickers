@@ -88,6 +88,8 @@ button:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 18p
 .progress-track.small-track { height: 8px; background: #e5e7eb; border-radius: 999px; overflow: hidden; border: 1px solid #e5e7eb; }
 .progress-track.small-track .progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), #60a5fa); border-radius: 999px; transition: width 0.3s ease; }
 .btn-danger.outline { background: #fff1f2; color: var(--danger); border-color: #fecdd3; }
+.card-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.new-album-btn { padding: 12px 16px; font-weight: 700; box-shadow: 0 8px 20px rgba(37,99,235,0.25); }
 .modal { position: fixed; inset: 0; background: rgba(15,23,42,0.45); display: flex; align-items: center; justify-content: center; z-index: 2000; }
 .modal.hidden { display: none; }
 .modal-content { background: var(--surface); border-radius: 14px; padding: 18px; width: min(420px, 90vw); box-shadow: 0 20px 60px rgba(0,0,0,0.25); border: 1px solid var(--border); }

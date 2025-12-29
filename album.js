@@ -15,13 +15,14 @@
     return;
   }
 
-  if (!albumId) {
+  const isFriend = params.get("source") === "friend";
+  const friendId = params.get("friendId");
+
+  if (!albumId && !friendId) {
     window.location.href = "dashboard.html";
     return;
   }
 
-  const isFriend = params.get("source") === "friend";
-  const friendId = params.get("friendId");
   const album = isFriend
     ? store.friendAlbums.find(a => a.id === friendId && a.profileId === profile.id)
     : store.albums.find(a => a.id === albumId && a.profileId === profile.id);
@@ -95,10 +96,18 @@
     }
     const idSet = new Set(STICKER_IDS);
     const firstId = STICKER_IDS[0];
-    const track = Storage.ensureTrack(store, profile.id, album.id, {
-      defaultStickerId: firstId,
-      validIds: idSet
-    });
+    const track = isFriend
+      ? {
+        stickers: album.stickers || {},
+        filter: "ALL",
+        viewerSection: "ALL",
+        collapsedSections: {},
+        currentId: firstId
+      }
+      : Storage.ensureTrack(store, profile.id, album.id, {
+        defaultStickerId: firstId,
+        validIds: idSet
+      });
     let currentId = track.currentId || firstId;
     if (!idSet.has(currentId)) currentId = firstId;
     let lastAction = null; // { id, prev }
@@ -332,6 +341,7 @@
     }
 
     function persist() {
+      if (isFriend) return;
       track.currentId = currentId;
       const allowed = new Set(["ALL","MISSING","OWNED","DUPLICATES"]);
       track.filter = allowed.has(track.filter) ? track.filter : "ALL";
@@ -391,8 +401,8 @@
                 <div class="row-meta">${metaParts.join(" · ")}</div>
               </div>
               <div class="row-actions">
-                <button class="row-action" data-act="dec" data-id="${id}" ${qty <= 0 ? "disabled" : ""}>-</button>
-                <button class="row-action" data-act="inc" data-id="${id}">+</button>
+                <button class="row-action" data-act="dec" data-id="${id}" ${qty <= 0 || isFriend ? "disabled" : ""}>-</button>
+                <button class="row-action" data-act="inc" data-id="${id}" ${isFriend ? "disabled" : ""}>+</button>
                 <div class="badge ${status.className}">${status.label}</div>
               </div>
             </div>
@@ -401,9 +411,9 @@
               <div class="detail-line"><strong>Tipo:</strong> ${item.Type || "-"}</div>
               <div class="detail-line"><strong>Stato:</strong> ${status.label}</div>
               <div class="detail-line"><strong>Quantità:</strong> ${val === null ? 0 : val}</div>
-              <div class="detail-actions">
+              ${isFriend ? "" : `<div class="detail-actions">
                 <button class="btn-danger" data-act="reset" data-id="${id}">Reset</button>
-              </div>
+              </div>`}
             </div>
           </div>
         `;
@@ -463,17 +473,20 @@
           openDetailId = (openDetailId === id) ? null : id;
           renderList();
         };
-        block.querySelectorAll(".row-action").forEach(btn => {
-          btn.onclick = (e) => {
-            e.stopPropagation();
-            const act = btn.getAttribute("data-act");
-            handleDetailAction(act, id, block);
-          };
-        });
+        if (!isFriend) {
+          block.querySelectorAll(".row-action").forEach(btn => {
+            btn.onclick = (e) => {
+              e.stopPropagation();
+              const act = btn.getAttribute("data-act");
+              handleDetailAction(act, id, block);
+            };
+          });
+        }
         detail.addEventListener("click", (e) => {
           const btn = e.target.closest("button[data-act]");
           if (!btn) return;
           const act = btn.getAttribute("data-act");
+          if (isFriend) return;
           handleDetailAction(act, id, block);
         });
       });
