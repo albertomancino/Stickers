@@ -4,17 +4,18 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.42.3";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const ACCESS_CODE = Deno.env.get("CLOUD_ACCESS_CODE");
 const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
 
-const ALLOWED_ORIGINS = ["https://<your-gh-username>.github.io", "http://localhost:8000"];
-const MAX_SIZE = 1_000_000; // 1MB
+const ALLOWED_ORIGINS = ["https://albertomancino.github.io", "http://localhost:8000"];
+const MAX_SIZE = 300_000; // ~300KB
 
 function corsHeaders(origin?: string) {
   const allowed = origin && ALLOWED_ORIGINS.some(o => origin.startsWith(o));
   const hdrOrigin = allowed ? origin : ALLOWED_ORIGINS[0];
   return {
     "Access-Control-Allow-Origin": hdrOrigin || "*",
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-access-code",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS"
   };
 }
@@ -65,6 +66,14 @@ serve(async (req) => {
     return new Response(JSON.stringify({ ok: false, error: "Payload troppo grande" }), { status: 413, headers });
   }
 
+  if (!ACCESS_CODE) {
+    return new Response(JSON.stringify({ ok: false, error: "Accesso cloud non configurato" }), { status: 500, headers });
+  }
+  const providedCode = req.headers.get("x-access-code") || "";
+  if (!providedCode || providedCode !== ACCESS_CODE) {
+    return new Response(JSON.stringify({ ok: false, error: "Codice cloud non valido" }), { status: 401, headers });
+  }
+
   const token = randomToken(48);
   const expires = new Date(Date.now() + ttlDays * 24 * 60 * 60 * 1000);
 
@@ -88,7 +97,5 @@ serve(async (req) => {
     return new Response(JSON.stringify({ ok: false, error: error.message }), { status: 500, headers });
   }
 
-  const url = `${req.headers.get("origin") || "https://<your-gh-username>.github.io/<repo>"}/import.html#${token}`;
-
-  return new Response(JSON.stringify({ ok: true, type, token, expiresAt: expires.toISOString(), url }), { headers });
+  return new Response(JSON.stringify({ ok: true, type, token, expiresAt: expires.toISOString() }), { headers });
 });

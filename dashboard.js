@@ -18,6 +18,9 @@
   const elLogout = document.getElementById("btnLogout");
   const elToast = document.getElementById("toast");
   const elImportBtn = document.getElementById("btnImportAlbum");
+  const elImportBtnTop = document.getElementById("btnImportAlbumTop");
+  const elImportBtnCloud = document.getElementById("btnImportAlbumCloud");
+  const elImportBtnCloudSecondary = document.getElementById("btnImportAlbumCloudSecondary");
   const elImportFile = document.getElementById("importFile");
   const elModal = document.getElementById("importModal");
   const elModalAlbum = document.getElementById("modalAlbumName");
@@ -29,15 +32,16 @@
   const elBtnCancelImport = document.getElementById("btnCancelImport");
   const elBtnConfirmImport = document.getElementById("btnConfirmImport");
   const elBtnExportProfile = document.getElementById("btnExportProfile");
-  const elBtnImportProfile = document.getElementById("btnImportProfile");
-  const elProfileImportFile = document.getElementById("profileImportFile");
-  const elProfileImpModal = document.getElementById("profileImportModal");
-  const elProfImpName = document.getElementById("profImpName");
-  const elProfImpId = document.getElementById("profImpId");
-  const elProfImpAlbumCount = document.getElementById("profImpAlbumCount");
-  const elProfImpOwned = document.getElementById("profImpOwned");
-  const elBtnCancelProfileImport = document.getElementById("btnCancelProfileImport");
-  const elBtnConfirmProfileImport = document.getElementById("btnConfirmProfileImport");
+  const elBtnCloudProfile = document.getElementById("btnCloudProfile");
+  const elCloudModal = document.getElementById("cloudModal");
+  const elCloudLink = document.getElementById("cloudLink");
+  const elBtnCloseCloud = document.getElementById("btnCloseCloud");
+  const elBtnCopyCloud = document.getElementById("btnCopyCloud");
+  const elBtnCloudSettings = document.getElementById("btnCloudSettings");
+  const elCloudSettingsModal = document.getElementById("cloudSettingsModal");
+  const elCloudAccessInput = document.getElementById("cloudAccessInput");
+  const elBtnCancelCloudSettings = document.getElementById("btnCancelCloudSettings");
+  const elBtnSaveCloudSettings = document.getElementById("btnSaveCloudSettings");
   const elNewAlbum = document.getElementById("btnNewAlbum");
   const elCreateModal = document.getElementById("createModal");
   const elCreateName = document.getElementById("modalCreateName");
@@ -46,13 +50,6 @@
   const elBtnCompare = document.getElementById("btnCompare");
   let pendingImport = null; // holds parsed import until confirm
   let pendingProfileImport = null;
-  const CLOUD_BASE = "https://<your-project-ref>.functions.supabase.co/functions/v1";
-  const elBtnCloudProfile = document.getElementById("btnCloudProfile");
-  const elBtnImportLink = document.getElementById("btnImportLink");
-  const elCloudModal = document.getElementById("cloudModal");
-  const elCloudLink = document.getElementById("cloudLink");
-  const elBtnCloseCloud = document.getElementById("btnCloseCloud");
-  const elBtnCopyCloud = document.getElementById("btnCopyCloud");
   const elLinkModal = document.getElementById("linkModal");
   const elLinkInput = document.getElementById("linkInput");
   const elLinkStatus = document.getElementById("linkStatus");
@@ -62,7 +59,7 @@
   const elSharePreviewBody = document.getElementById("sharePreviewBody");
   const elBtnCancelShare = document.getElementById("btnCancelShare");
   const elBtnConfirmShare = document.getElementById("btnConfirmShare");
-  let pendingShare = null;
+  let pendingAlbumShare = null;
 
   elWelcome.textContent = `Ciao ${profile.name}`;
   const params = new URLSearchParams(window.location.search);
@@ -114,11 +111,10 @@
         btnExport.textContent = "⬇️ Esporta";
         btnExport.className = "ghost small-btn";
         btnExport.onclick = () => exportAlbum(album.id, album.name, profile.name);
-
-        const btnCloud = document.createElement("button");
-        btnCloud.textContent = "☁️ Carica su cloud";
-        btnCloud.className = "ghost small-btn";
-        btnCloud.onclick = () => uploadAlbum(album.id, false);
+        const btnExportCloud = document.createElement("button");
+        btnExportCloud.textContent = "☁️ Esporta cloud";
+        btnExportCloud.className = "ghost small-btn";
+        btnExportCloud.onclick = () => exportAlbumCloud(album.id, album.name);
 
         const btnDel = document.createElement("button");
         btnDel.textContent = "🗑️ Elimina";
@@ -127,7 +123,7 @@
 
         actions.appendChild(btnOpen);
         actions.appendChild(btnExport);
-        actions.appendChild(btnCloud);
+        actions.appendChild(btnExportCloud);
         actions.appendChild(btnDel);
         row.appendChild(info);
         row.appendChild(actions);
@@ -170,11 +166,10 @@
         btnExport.textContent = "⬇️ Esporta";
         btnExport.className = "ghost small-btn";
         btnExport.onclick = () => exportFriend(entry.id, entry.album.name, entry.ownerName);
-
-        const btnCloud = document.createElement("button");
-        btnCloud.textContent = "☁️ Carica su cloud";
-        btnCloud.className = "ghost small-btn";
-        btnCloud.onclick = () => uploadAlbum(entry.id, true);
+        const btnExportCloud = document.createElement("button");
+        btnExportCloud.textContent = "☁️ Esporta cloud";
+        btnExportCloud.className = "ghost small-btn";
+        btnExportCloud.onclick = () => exportFriendCloud(entry.id, entry.album.name);
 
         const btnRemove = document.createElement("button");
         btnRemove.textContent = "🗑️ Rimuovi";
@@ -183,7 +178,7 @@
 
         actions.appendChild(btnOpen);
         actions.appendChild(btnExport);
-        actions.appendChild(btnCloud);
+        actions.appendChild(btnExportCloud);
         actions.appendChild(btnRemove);
         row.appendChild(info);
         row.appendChild(actions);
@@ -215,121 +210,37 @@
       triggerDownload(payload, Storage.sanitizeFileName(`profilo_${profile.name}_${shortId}_panini.json`));
     };
   }
-  if (elBtnImportProfile) {
-    elBtnImportProfile.onclick = () => elProfileImportFile?.click();
-  }
-  if (elProfileImportFile) {
-    elProfileImportFile.onchange = (e) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        try {
-          const parsed = JSON.parse(reader.result);
-          const check = Storage.validateProfileImport(parsed);
-          if (!check.ok) {
-            showToast(check.error || "File profilo non valido.");
-            return;
-          }
-          const albumsCount = Array.isArray(parsed.albums) ? parsed.albums.length : 0;
-          let owned = 0;
-          if (parsed.tracks) {
-            for (const aid in parsed.tracks) {
-              const stickers = parsed.tracks[aid]?.stickers || {};
-              owned += Object.keys(stickers).length;
-            }
-          }
-          elProfImpName.textContent = parsed.profile.name;
-          elProfImpId.textContent = parsed.profile.id.slice(0, 8);
-          elProfImpAlbumCount.textContent = albumsCount;
-          elProfImpOwned.textContent = owned;
-          pendingProfileImport = { parsed };
-          elProfileImpModal.classList.remove("hidden");
-        } catch {
-          showToast("Errore nel leggere il file.");
-        } finally {
-          elProfileImportFile.value = "";
-        }
-      };
-      reader.readAsText(file);
-    };
-  }
-  if (elBtnCancelProfileImport) {
-    elBtnCancelProfileImport.onclick = () => {
-      pendingProfileImport = null;
-      elProfileImpModal.classList.add("hidden");
-    };
-  }
-  if (elBtnConfirmProfileImport) {
-    elBtnConfirmProfileImport.onclick = () => {
-      if (!pendingProfileImport) return;
-      const { parsed } = pendingProfileImport;
-      const exists = store.profiles.some(p => p.id === parsed.profile.id);
-      if (exists) {
-        const ok = confirm("Questo profilo esiste già su questo dispositivo. Vuoi SOVRASCRIVERLO?");
-        if (!ok) { pendingProfileImport = null; elProfileImpModal.classList.add("hidden"); return; }
-      }
-      const res = Storage.applyProfileImport(store, parsed, exists);
-      if (!res.ok && res.reason === "exists") {
-        showToast("Profilo già presente. Sovrascrivi per importare.");
-        pendingProfileImport = null;
-        elProfileImpModal.classList.add("hidden");
-        return;
-      }
-      pendingProfileImport = null;
-      elProfileImpModal.classList.add("hidden");
-      window.location.href = "./dashboard.html?msg=profile_imported";
-    };
-  }
   if (elBtnCloudProfile) {
     elBtnCloudProfile.onclick = async () => {
       const payload = Storage.buildProfileExport(store, profile.id);
       if (!payload) { showToast("Nessun profilo."); return; }
-      await createShare("profile", payload);
-    };
-  }
-  if (elBtnImportLink) {
-    elBtnImportLink.onclick = () => {
-      elLinkInput.value = "";
-      elLinkStatus.textContent = "";
-      elLinkModal.classList.remove("hidden");
-      setTimeout(() => elLinkInput.focus(), 50);
-    };
-  }
-  if (elBtnCancelLink) {
-    elBtnCancelLink.onclick = () => {
-      elLinkModal.classList.add("hidden");
-      elLinkStatus.textContent = "";
-    };
-  }
-  if (elBtnFetchLink) {
-    elBtnFetchLink.onclick = async () => {
-      const token = parseToken(elLinkInput.value);
-      if (!token) { elLinkStatus.textContent = "Inserisci un token valido."; return; }
-      elLinkStatus.textContent = "Caricamento...";
-      const data = await fetchShare(token);
-      if (!data) { elLinkStatus.textContent = "Token non valido o scaduto."; return; }
-      pendingShare = data;
-      renderSharePreview(data);
-      elLinkModal.classList.add("hidden");
-      elSharePreviewModal.classList.remove("hidden");
-    };
-  }
-  if (elBtnCancelShare) {
-    elBtnCancelShare.onclick = () => {
-      pendingShare = null;
-      elSharePreviewModal.classList.add("hidden");
-    };
-  }
-  if (elBtnConfirmShare) {
-    elBtnConfirmShare.onclick = async () => {
-      if (!pendingShare) return;
-      const ok = await importPayload(pendingShare);
-      if (ok) {
-        elSharePreviewModal.classList.add("hidden");
-        renderAlbums();
+      try {
+        const res = await Cloud.createShare("profile", payload);
+        showCloudToken(res.token);
+      } catch (e) {
+        const msg = e.message || "Errore cloud";
+        if (msg.toLowerCase().includes("codice cloud")) {
+          showToast("Codice cloud non valido. Inseriscilo nelle impostazioni.");
+        } else {
+          showToast(msg);
+        }
       }
-      pendingShare = null;
+    };
+  }
+  // cloud link modal
+  if (elBtnCloseCloud) elBtnCloseCloud.onclick = () => elCloudModal.classList.add("hidden");
+  if (elBtnCopyCloud) {
+    elBtnCopyCloud.onclick = async () => {
+      try {
+        if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(elCloudLink.value);
+        else {
+          elCloudLink.select();
+          document.execCommand("copy");
+        }
+        showToast("Link copiato");
+      } catch {
+        showToast("Copia non riuscita");
+      }
     };
   }
   if (elBtnCancelCreate) {
@@ -353,6 +264,25 @@
   elImportBtn.onclick = () => {
     if (elImportFile) elImportFile.click();
   };
+  if (elImportBtnTop) {
+    elImportBtnTop.onclick = () => { if (elImportFile) elImportFile.click(); };
+  }
+  if (elImportBtnCloud) {
+    elImportBtnCloud.onclick = () => {
+      elLinkInput.value = "";
+      elLinkStatus.textContent = "";
+      elLinkModal.classList.remove("hidden");
+      setTimeout(() => elLinkInput.focus(), 50);
+    };
+  }
+  if (elImportBtnCloudSecondary) {
+    elImportBtnCloudSecondary.onclick = () => {
+      elLinkInput.value = "";
+      elLinkStatus.textContent = "";
+      elLinkModal.classList.remove("hidden");
+      setTimeout(() => elLinkInput.focus(), 50);
+    };
+  }
 
   elImportFile.onchange = (e) => {
     const file = e.target.files?.[0];
@@ -386,6 +316,52 @@
     };
     reader.readAsText(file);
   };
+
+  if (elBtnCancelLink) {
+    elBtnCancelLink.onclick = () => {
+      elLinkModal.classList.add("hidden");
+      elLinkStatus.textContent = "";
+      pendingAlbumShare = null;
+    };
+  }
+  if (elBtnFetchLink) {
+    elBtnFetchLink.onclick = async () => {
+      const token = Cloud.parseToken(elLinkInput.value);
+      if (!token) { elLinkStatus.textContent = "Inserisci un token valido."; return; }
+      if (!Cloud.isValidToken(token)) { elLinkStatus.textContent = "Token non valido."; return; }
+      elLinkStatus.textContent = "Caricamento...";
+      try {
+        const data = await Cloud.fetchShare(token);
+        if (data.type !== "album") {
+          elLinkStatus.textContent = "Questo link è un profilo, non un album.";
+          return;
+        }
+        pendingAlbumShare = data.payload;
+        renderAlbumSharePreview(data.payload);
+        elLinkModal.classList.add("hidden");
+        elSharePreviewModal.classList.remove("hidden");
+      } catch (err) {
+        elLinkStatus.textContent = err.message || "Errore link";
+      }
+    };
+  }
+  if (elBtnCancelShare) {
+    elBtnCancelShare.onclick = () => {
+      pendingAlbumShare = null;
+      elSharePreviewModal.classList.add("hidden");
+    };
+  }
+  if (elBtnConfirmShare) {
+    elBtnConfirmShare.onclick = async () => {
+      if (!pendingAlbumShare) return;
+      const ok = importAlbumPayload(pendingAlbumShare);
+      if (ok) {
+        elSharePreviewModal.classList.add("hidden");
+        renderAlbums();
+      }
+      pendingAlbumShare = null;
+    };
+  }
 
   elBtnCancelImport.onclick = () => {
     pendingImport = null;
@@ -517,97 +493,42 @@
     triggerDownload(payload, Storage.sanitizeFileName(`${albumName}_${profileName}_panini.json`));
   }
 
+  async function exportAlbumCloud(albumId, albumName) {
+    const payload = Storage.exportAlbum(store, profile.id, albumId, profile.name);
+    if (!payload) { showToast("Album non trovato"); return; }
+    try {
+        const res = await Cloud.createShare("album", payload);
+        showCloudToken(res.token);
+    } catch (e) {
+      const msg = e.message || "Errore cloud";
+      if (msg.toLowerCase().includes("codice cloud")) {
+        showToast("Codice cloud non valido. Inseriscilo nelle impostazioni.");
+      } else {
+        showToast(msg);
+      }
+    }
+  }
+
   function exportFriend(friendId, albumName, owner) {
     const payload = Storage.exportFriendAlbum(store, profile.id, friendId);
     if (!payload) return;
     triggerDownload(payload, Storage.sanitizeFileName(`${albumName}_${owner}_panini.json`));
   }
 
-  function uploadAlbum(id, isFriend) {
-    const payload = isFriend
-      ? Storage.exportFriendAlbum(store, profile.id, id)
-      : Storage.exportAlbum(store, profile.id, id, profile.name);
+  async function exportFriendCloud(friendId, albumName) {
+    const payload = Storage.exportFriendAlbum(store, profile.id, friendId);
     if (!payload) { showToast("Album non trovato"); return; }
-    createShare("album", payload);
-  }
-
-  function parseToken(str) {
-    if (!str) return null;
     try {
-      const url = new URL(str);
-      if (url.hash) return url.hash.replace("#", "").trim();
-      if (url.searchParams.get("token")) return url.searchParams.get("token")?.trim();
-    } catch {
-      // not a URL
-    }
-    return str.trim();
-  }
-
-  async function createShare(type, payload) {
-    try {
-      const res = await fetch(`${CLOUD_BASE}/create_share`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type, payload })
-      });
-      const data = await res.json();
-      if (!res.ok || !data.ok) throw new Error(data.error || "Errore creazione link");
-      elCloudLink.value = data.url;
-      elCloudModal.classList.remove("hidden");
+        const res = await Cloud.createShare("album", payload);
+        showCloudToken(res.token);
     } catch (e) {
-      showToast(e.message || "Errore cloud");
-    }
-  }
-
-  async function fetchShare(token) {
-    try {
-      const res = await fetch(`${CLOUD_BASE}/get_share?token=${encodeURIComponent(token)}`);
-      const data = await res.json();
-      if (!res.ok || !data.ok) throw new Error(data.error || "Errore");
-      return data;
-    } catch (e) {
-      showToast(e.message || "Errore link");
-      return null;
-    }
-  }
-
-  function renderSharePreview(data) {
-    const { type, payload } = data;
-    const ownerName = payload.owner?.name || payload.profile?.name || "Sconosciuto";
-    const ownerId = (payload.owner?.id || payload.profile?.id || "").slice(0, 8);
-    let html = `<div><strong>Tipo:</strong> ${type === "profile" ? "Profilo" : "Album"}</div>`;
-    html += `<div><strong>Proprietario:</strong> ${ownerName}${ownerId ? " · " + ownerId : ""}</div>`;
-    if (type === "album") {
-      const stats = Storage.computeStats(payload.album.total, payload.stickers || {});
-      html += `<div><strong>Album:</strong> ${payload.album.name} (${payload.album.total})</div>`;
-      html += `<div><strong>Ce l’ho:</strong> ${stats.owned} • Mancanti: ${stats.missing} • Doppie: ${stats.dup}</div>`;
-    } else {
-      const albumsCount = Array.isArray(payload.albums) ? payload.albums.length : 0;
-      html += `<div><strong>Album inclusi:</strong> ${albumsCount}</div>`;
-    }
-    elSharePreviewBody.innerHTML = html;
-  }
-
-  async function importPayload(data) {
-    const { type, payload } = data;
-    if (type === "profile") {
-      const exists = store.profiles.some(p => p.id === payload.profile.id);
-      if (exists) {
-        const ok = confirm("Questo profilo esiste già. Sovrascrivere?");
-        if (!ok) return false;
+      const msg = e.message || "Errore cloud";
+      if (msg.toLowerCase().includes("codice cloud")) {
+        showToast("Codice cloud non valido. Inseriscilo nelle impostazioni.");
+      } else {
+        showToast(msg);
       }
-      const res = Storage.applyProfileImport(store, payload, exists);
-      if (!res.ok && res.reason === "exists") {
-        showToast("Profilo già presente.");
-        return false;
-      }
-      showToast("Profilo importato ✅");
-      return true;
     }
-    if (type === "album") {
-      return importAlbumPayload(payload);
-    }
-    return false;
   }
 
   function importAlbumPayload(parsed) {
@@ -678,8 +599,23 @@
     URL.revokeObjectURL(url);
   }
 
+  function showCloudToken(token) {
+    if (!elCloudModal || !elCloudLink) return;
+    elCloudLink.value = token || "";
+    elCloudModal.classList.remove("hidden");
+  }
+
+  function renderAlbumSharePreview(payload) {
+    const ownerName = payload.owner?.name || "Sconosciuto";
+    const ownerId = (payload.owner?.id || "").slice(0, 8);
+    const stats = Storage.computeStats(payload.album.total, payload.stickers || {});
+    let html = `<div><strong>Album:</strong> ${payload.album.name} (${payload.album.total})</div>`;
+    html += `<div><strong>Proprietario:</strong> ${ownerName}${ownerId ? " · " + ownerId : ""}</div>`;
+    html += `<div><strong>Ce l’ho:</strong> ${stats.owned} • Mancanti: ${stats.missing} • Doppie: ${stats.dup}</div>`;
+    elSharePreviewBody.innerHTML = html;
+  }
   if (elBtnCloseCloud) {
-    elBtnCloseCloud.onclick = () => elCloudModal.classList.add("hidden");
+    elBtnCloseCloud.onclick = () => elCloudModal?.classList.add("hidden");
   }
   if (elBtnCopyCloud) {
     elBtnCopyCloud.onclick = async () => {
@@ -694,6 +630,23 @@
       } catch {
         showToast("Copia non riuscita");
       }
+    };
+  }
+  if (elBtnCloudSettings) {
+    elBtnCloudSettings.onclick = () => {
+      if (elCloudAccessInput) elCloudAccessInput.value = Cloud.getAccessCode();
+      elCloudSettingsModal?.classList.remove("hidden");
+      setTimeout(() => elCloudAccessInput?.focus(), 50);
+    };
+  }
+  if (elBtnCancelCloudSettings) {
+    elBtnCancelCloudSettings.onclick = () => elCloudSettingsModal?.classList.add("hidden");
+  }
+  if (elBtnSaveCloudSettings) {
+    elBtnSaveCloudSettings.onclick = () => {
+      Cloud.setAccessCode(elCloudAccessInput?.value?.trim() || "");
+      elCloudSettingsModal?.classList.add("hidden");
+      showToast("Codice cloud salvato");
     };
   }
 

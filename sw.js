@@ -9,6 +9,7 @@ const CORE_ASSETS = [
   "./offline.html",
   "./style.css",
   "./storage.js",
+  "./cloud.js",
   "./login.js",
   "./dashboard.js",
   "./album.js",

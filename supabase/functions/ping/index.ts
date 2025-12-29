@@ -5,7 +5,7 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
 
-const ALLOWED_ORIGINS = ["https://<your-gh-username>.github.io", "http://localhost:8000"];
+const ALLOWED_ORIGINS = ["https://albertomancino.github.io", "http://localhost:8000"];
 
 function corsHeaders(origin?: string) {
   const allowed = origin && ALLOWED_ORIGINS.some(o => origin.startsWith(o));

@@ -13,11 +13,9 @@
     <header class="top">
       <h1 id="welcome"></h1>
       <div class="top-actions">
-        <button id="btnExportProfile" class="ghost small-btn">Esporta profilo</button>
-        <button id="btnImportProfile" class="ghost small-btn">Importa profilo</button>
-        <input id="profileImportFile" type="file" accept="application/json" class="hidden" />
-        <button id="btnCloudProfile" class="ghost small-btn">Carica profilo su cloud</button>
-        <button id="btnImportLink" class="ghost small-btn">Importa da link</button>
+        <button id="btnCloudProfile" class="ghost small-btn">Esporta profilo su cloud</button>
+        <button id="btnExportProfile" class="ghost small-btn">Esporta profilo su file</button>
+        <button id="btnCloudSettings" class="ghost small-btn">Impostazioni cloud</button>
         <button id="btnCompare" class="ghost small-btn">Confronta album</button>
         <button id="btnLogout" class="ghost small-btn">Logout</button>
       </div>
@@ -26,7 +24,12 @@
     <section class="card">
       <div class="card-header">
         <h2>I tuoi album</h2>
-        <button id="btnNewAlbum" class="primary new-album-btn">+ Nuovo album</button>
+        <div class="action-buttons">
+          <button id="btnNewAlbum" class="primary new-album-btn">+ Nuovo album</button>
+          <button id="btnImportAlbumTop" class="ghost small-btn">Importa album da file</button>
+          <button id="btnImportAlbumCloud" class="ghost small-btn">Importa album da cloud</button>
+          <input id="importFile" type="file" accept="application/json" class="hidden" />
+        </div>
       </div>
       <div id="albumsList" class="list"></div>
     </section>
@@ -35,8 +38,8 @@
       <div class="card-header">
         <h2>Album di amici</h2>
         <div class="action-buttons">
-          <button id="btnImportAlbum" class="ghost small-btn">Importa album</button>
-          <input id="importFile" type="file" accept="application/json" class="hidden" />
+          <button id="btnImportAlbum" class="ghost small-btn">Importa album da file</button>
+          <button id="btnImportAlbumCloudSecondary" class="ghost small-btn">Importa album da cloud</button>
         </div>
       </div>
       <div id="friendAlbumsList" class="list"></div>
@@ -44,6 +47,40 @@
   </main>
 
   <div id="toast" class="toast hidden"></div>
+
+  <div id="cloudModal" class="modal hidden">
+    <div class="modal-content">
+      <h3>Token generato</h3>
+      <div class="modal-body">
+        <div class="field">
+          <label>Token</label>
+          <input id="cloudLink" type="text" readonly />
+        </div>
+        <div class="muted small">Copia il token e incollalo in “Importa da cloud”.</div>
+      </div>
+      <div class="modal-actions">
+        <button id="btnCloseCloud" class="ghost small-btn">Chiudi</button>
+        <button id="btnCopyCloud" class="primary small-btn">Copia token</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="cloudSettingsModal" class="modal hidden">
+    <div class="modal-content">
+      <h3>Impostazioni cloud</h3>
+      <div class="modal-body">
+        <div class="field">
+          <label for="cloudAccessInput">Codice cloud</label>
+          <input id="cloudAccessInput" type="password" placeholder="Inserisci il codice fornito" />
+        </div>
+        <p class="muted small">Il codice è richiesto per creare link cloud. Viene salvato solo sul dispositivo.</p>
+      </div>
+      <div class="modal-actions">
+        <button id="btnCancelCloudSettings" class="ghost small-btn">Annulla</button>
+        <button id="btnSaveCloudSettings" class="primary small-btn">Salva</button>
+      </div>
+    </div>
+  </div>
 
   <div id="importModal" class="modal hidden">
     <div class="modal-content">
@@ -80,23 +117,6 @@
     </div>
   </div>
 
-  <div id="cloudModal" class="modal hidden">
-    <div class="modal-content">
-      <h3>Link generato</h3>
-      <div class="modal-body">
-        <div class="field">
-          <label>Condividi questo link</label>
-          <input id="cloudLink" type="text" readonly />
-        </div>
-        <div class="muted small">Il link scade automaticamente dopo qualche settimana.</div>
-      </div>
-      <div class="modal-actions">
-        <button id="btnCloseCloud" class="ghost small-btn">Chiudi</button>
-        <button id="btnCopyCloud" class="primary small-btn">Copia</button>
-      </div>
-    </div>
-  </div>
-
   <div id="linkModal" class="modal hidden">
     <div class="modal-content">
       <h3>Importa da link</h3>
@@ -125,23 +145,8 @@
     </div>
   </div>
 
-  <div id="profileImportModal" class="modal hidden">
-    <div class="modal-content">
-      <h3>Importa profilo</h3>
-      <div class="modal-body">
-        <div><strong>Profilo:</strong> <span id="profImpName"></span></div>
-        <div><strong>ID:</strong> <span id="profImpId"></span></div>
-        <div><strong>Album:</strong> <span id="profImpAlbumCount"></span></div>
-        <div><strong>Totale figurine possedute:</strong> <span id="profImpOwned"></span></div>
-      </div>
-      <div class="modal-actions">
-        <button id="btnCancelProfileImport" class="ghost small-btn">Annulla</button>
-        <button id="btnConfirmProfileImport" class="primary small-btn">Importa</button>
-      </div>
-    </div>
-  </div>
-
   <script src="./storage.js"></script>
+  <script src="./cloud.js"></script>
   <script src="./pwa.js"></script>
   <script src="./dashboard.js"></script>
 </body>

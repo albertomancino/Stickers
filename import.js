@@ -1,6 +1,4 @@
 (() => {
-  const CLOUD_BASE = "https://<your-project-ref>.functions.supabase.co/functions/v1";
-
   const store = Storage.load();
   const elToken = document.getElementById("tokenInput");
   const elFetch = document.getElementById("btnFetch");
@@ -17,7 +15,7 @@
   elCancel.onclick = () => { fetched = null; elPreview.classList.add("hidden"); };
 
   elFetch.onclick = () => {
-    const token = parseToken(elToken.value);
+    const token = Cloud.parseToken(elToken.value);
     if (!token) { setStatus("Inserisci un token valido."); return; }
     fetchShare(token);
   };
@@ -30,31 +28,17 @@
   };
 
   // auto fetch if hash present
-  const autoToken = parseToken(window.location.hash?.slice(1) || "");
+  const autoToken = Cloud.parseToken(window.location.hash?.slice(1) || "");
   if (autoToken) {
     elToken.value = autoToken;
     fetchShare(autoToken);
-  }
-
-  function parseToken(str) {
-    if (!str) return null;
-    try {
-      const url = new URL(str);
-      if (url.hash) return url.hash.replace("#", "").trim();
-      if (url.searchParams.get("token")) return url.searchParams.get("token")?.trim();
-    } catch {
-      // not a URL
-    }
-    return str.trim();
   }
 
   async function fetchShare(token) {
     setStatus("Caricamento...");
     elPreview.classList.add("hidden");
     try {
-      const res = await fetch(`${CLOUD_BASE}/get_share?token=${encodeURIComponent(token)}`);
-      const data = await res.json();
-      if (!res.ok || !data.ok) throw new Error(data.error || "Errore di rete");
+      const data = await Cloud.fetchShare(token);
       fetched = data;
       renderPreview(data);
       setStatus("");
