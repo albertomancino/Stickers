@@ -54,8 +54,8 @@ button:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 18p
 .title { margin-top: 6px; font-size: 18px; font-weight: 600; }
 .state { margin-top: 6px; font-size: 16px; opacity: .85; }
 .hint { margin-top: 12px; font-size: 13px; color: var(--muted); }
-.list { display: flex; flex-direction: column; gap: 10px; }
-.list-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px; border: 1px solid var(--border); border-radius: 12px; background: #fdfefe; box-shadow: 0 4px 14px rgba(0,0,0,0.04); }
+.list { display: flex; flex-direction: column; gap: 8px; }
+.list-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; background: #fdfefe; box-shadow: 0 4px 14px rgba(0,0,0,0.04); }
 .list-row:nth-child(2n) { background: #fafbff; }
 .hidden { display: none; }
 .section-header { margin: 14px 0 6px; font-size: 15px; font-weight: 800; color: var(--text); }
@@ -93,11 +93,19 @@ button:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 18p
 #progressFill { height: 100%; width: 0; background: linear-gradient(90deg, var(--primary), #60a5fa); border-radius: 999px; transition: width 0.3s ease; }
 
 /* sticker rows */
+.controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 16px; }
 #stickerList .row { transition: background 0.15s ease, transform 0.1s ease; }
 #stickerList .row:hover { background: #f1f5f9; transform: translateY(-1px); }
+.sectionBody .sticker-block { margin-bottom: 6px; }
+.sectionBody .sticker-block:last-child { margin-bottom: 0; }
+.sectionBody .sticker-block:nth-child(2n) .row { background: #f7f8fb; }
 .row-actions { display: flex; align-items: center; gap: 8px; }
-.row-action { padding: 6px 10px; border-radius: 10px; border: 1px solid var(--border); background: #f8fafc; min-width: 36px; }
+.row-action { padding: 6px 10px; border-radius: 10px; border: 1px solid var(--border); background: #f8fafc; min-width: 36px; height: 34px; }
 .row-action:hover:not(:disabled) { background: #e5edff; border-color: #c7d2fe; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.row-main { display: flex; flex-direction: column; gap: 2px; }
+.row-title { font-weight: 700; font-size: 15px; }
+.row-meta { font-size: 12px; color: var(--muted); }
 .row-flash { animation: rowFlash 0.25s ease; }
 @keyframes rowFlash { from { background: #e0f2fe; } to { background: transparent; } }
 

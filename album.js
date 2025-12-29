@@ -372,9 +372,6 @@
               <div class="detail-line"><strong>Stato:</strong> ${status.label}</div>
               <div class="detail-line"><strong>Quantità:</strong> ${val === null ? 0 : val}</div>
               <div class="detail-actions">
-                <button class="btn-secondary" data-act="dec" data-id="${id}">-1</button>
-                <button class="btn-secondary" data-act="inc" data-id="${id}">+1</button>
-                <button class="primary" data-act="missing" data-id="${id}">Imposta mancanti</button>
                 <button class="btn-danger" data-act="reset" data-id="${id}">Reset</button>
               </div>
             </div>
