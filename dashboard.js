@@ -33,6 +33,7 @@
   const elCreateName = document.getElementById("modalCreateName");
   const elBtnCancelCreate = document.getElementById("btnCancelCreate");
   const elBtnConfirmCreate = document.getElementById("btnConfirmCreate");
+  const elBtnCompare = document.getElementById("btnCompare");
   let pendingImport = null; // holds parsed import until confirm
 
   elWelcome.textContent = `Ciao ${profile.name}`;
@@ -152,6 +153,11 @@
       elCreateName.value = "";
       elCreateModal.classList.remove("hidden");
       setTimeout(() => elCreateName.focus(), 50);
+    };
+  }
+  if (elBtnCompare) {
+    elBtnCompare.onclick = () => {
+      window.location.href = "compare.html";
     };
   }
   if (elBtnCancelCreate) {
