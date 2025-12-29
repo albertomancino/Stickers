@@ -94,6 +94,7 @@ button:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 18p
 
 /* sticker rows */
 .controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 16px; }
+#sectionSelect { min-width: 180px; }
 #stickerList .row { transition: background 0.15s ease, transform 0.1s ease; }
 #stickerList .row:hover { background: #f1f5f9; transform: translateY(-1px); }
 .sectionBody .sticker-block { margin-bottom: 6px; }
