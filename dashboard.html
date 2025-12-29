@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Panini Tracker · Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="wrap">
+    <header class="top">
+      <h1 id="welcome"></h1>
+      <button id="btnLogout" class="ghost small-btn">Logout</button>
+    </header>
+
+    <section class="card">
+      <h2>I tuoi album</h2>
+      <div id="albumsList" class="list"></div>
+    </section>
+
+    <section class="card">
+      <h2>Crea un album</h2>
+      <div class="field">
+        <label for="albumName">Nome</label>
+        <input id="albumName" type="text" placeholder="Es. Calciatori 2025/26" />
+      </div>
+      <button id="btnCreateAlbum" class="primary">Crea</button>
+    </section>
+  </main>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="storage.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>

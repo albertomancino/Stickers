@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Panini Tracker · Album</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="wrap">
+    <header class="top">
+      <div>
+        <h1 id="albumName"></h1>
+        <p class="muted" id="profileName"></p>
+      </div>
+      <div class="top-actions">
+        <button id="btnBack" class="ghost small-btn">← Dashboard</button>
+        <button id="btnLogout" class="ghost small-btn">Logout</button>
+      </div>
+    </header>
+
+    <section class="card" id="viewerSection">
+      <div class="mode-switch">
+        <button id="btnModeViewer" class="primary small-btn">Visualizza album</button>
+        <button id="btnModePopulate" class="ghost small-btn">Modalità inserimento</button>
+      </div>
+      <div class="stats">
+        <div><strong id="statRated"></strong><span class="muted small">Completato</span></div>
+        <div><strong id="statMissing"></strong><span class="muted small">Mancanti</span></div>
+        <div><strong id="statOwned"></strong><span class="muted small">Ce l’ho</span></div>
+        <div><strong id="statDup"></strong><span class="muted small">Doppie</span></div>
+        <div><strong id="statUnrated"></strong><span class="muted small">Non valutate</span></div>
+      </div>
+
+      <div class="controls">
+        <input id="searchInput" type="text" placeholder="Cerca per numero o titolo" />
+        <select id="statusFilter" aria-label="Stato">
+          <option value="ALL">Tutti gli stati</option>
+          <option value="MISSING">Mancanti</option>
+          <option value="OWNED">Ce l’ho</option>
+          <option value="DUPLICATES">Doppie</option>
+          <option value="UNRATED">Non valutate</option>
+        </select>
+        <label for="sectionSelect">Sezione:</label>
+        <select id="sectionSelect">
+          <option value="ALL">Tutte le sezioni</option>
+        </select>
+        <button id="btnCopyMissing" class="ghost small-btn">Copia mancanti</button>
+      </div>
+
+      <div id="stickerList" class="list stickers"></div>
+    </section>
+
+    <section class="card hidden" id="populateSection">
+      <div class="bar">
+        <label>
+          Filtro:
+          <select id="filterSelect">
+            <option value="ALL">Tutte</option>
+            <option value="UNRATED">Solo non valutate</option>
+          </select>
+        </label>
+        <button id="btnExitPopulate" class="ghost small-btn">Torna a lista</button>
+      </div>
+
+      <section class="card inner" id="card">
+        <div class="num" id="number">#1</div>
+        <div class="title" id="title"></div>
+        <div class="meta muted" id="meta"></div>
+        <div class="state" id="state">Non valutata</div>
+        <div class="hint">Swipe ← manca · Swipe → ce l’ho · Tap + doppia</div>
+      </section>
+
+      <section class="actions">
+        <button id="btnMissing">❌ Manca</button>
+        <button id="btnOwned">✅ Ce l’ho</button>
+        <button id="btnDup">➕ Doppia</button>
+        <button id="btnUndo">↩️ Undo</button>
+      </section>
+
+      <section class="quick">
+        <h3>Quick-add</h3>
+        <textarea id="quickInput" rows="3" placeholder="Esempio: 12 18 44-51 103"></textarea>
+        <div class="quickActions">
+          <button id="qaAddOne">+1 copia</button>
+          <button id="qaSetMissing">Imposta mancanti</button>
+        </div>
+        <div class="small" id="quickMsg"></div>
+      </section>
+    </section>
+  </main>
+
+  <script src="storage.js"></script>
+  <script src="catalog.js"></script>
+  <script src="album.js"></script>
+</body>
+</html>

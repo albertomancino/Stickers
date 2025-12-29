@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Panini Tracker · Login</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="wrap">
+    <header class="top">
+      <h1>Panini Tracker</h1>
+      <p class="muted">Seleziona un profilo oppure creane uno nuovo</p>
+    </header>
+
+    <section class="card">
+      <h2>Accedi</h2>
+      <div class="field">
+        <label for="profileSelect">Profili esistenti</label>
+        <select id="profileSelect"></select>
+      </div>
+      <button id="btnLogin" class="primary">Login</button>
+    </section>
+
+    <section class="card">
+      <h2>Nuovo profilo</h2>
+      <div class="field">
+        <label for="newProfileName">Nome profilo</label>
+        <input id="newProfileName" type="text" placeholder="Es. Alberto" />
+      </div>
+      <button id="btnCreateLogin">Crea &amp; accedi</button>
+    </section>
+  </main>
+
+  <script src="storage.js"></script>
+  <script src="login.js"></script>
+</body>
+</html>
