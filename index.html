@@ -21,6 +21,7 @@
         <label for="profileSelect">Profili esistenti</label>
         <select id="profileSelect"></select>
       </div>
+      <div id="noProfilesMsg" class="muted small hidden">Nessun profilo trovato. Crea un profilo per iniziare.</div>
       <button id="btnLogin" class="primary">Login</button>
     </section>
 
@@ -31,7 +32,34 @@
         <input id="newProfileName" type="text" placeholder="Es. Alberto" />
       </div>
       <button id="btnCreateLogin">Crea &amp; accedi</button>
+      <div class="actions single" style="margin-top:10px;">
+        <button id="btnImportProfile" class="ghost">Importa profilo</button>
+        <input id="profileImportFile" type="file" accept="application/json" class="hidden" />
+      </div>
     </section>
+
+    <section class="card">
+      <h2>Gestisci profili</h2>
+      <div id="profilesList" class="list"></div>
+    </section>
+
+    <div id="profileImportModal" class="modal hidden">
+      <div class="modal-content">
+        <h3>Importa profilo</h3>
+        <div class="modal-body">
+          <div><strong>Profilo:</strong> <span id="impProfileName"></span></div>
+          <div><strong>ID:</strong> <span id="impProfileId"></span></div>
+          <div><strong>Album:</strong> <span id="impAlbumCount"></span></div>
+          <div><strong>Totale figurine possedute:</strong> <span id="impOwned"></span></div>
+        </div>
+        <div class="modal-actions">
+          <button id="btnCancelProfileImport" class="ghost small-btn">Annulla</button>
+          <button id="btnConfirmProfileImport" class="primary small-btn">Importa</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="toast" class="toast hidden"></div>
   </main>
 
   <script src="./storage.js"></script>

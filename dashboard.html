@@ -13,6 +13,9 @@
     <header class="top">
       <h1 id="welcome"></h1>
       <div class="top-actions">
+        <button id="btnExportProfile" class="ghost small-btn">Esporta profilo</button>
+        <button id="btnImportProfile" class="ghost small-btn">Importa profilo</button>
+        <input id="profileImportFile" type="file" accept="application/json" class="hidden" />
         <button id="btnCompare" class="ghost small-btn">Confronta album</button>
         <button id="btnLogout" class="ghost small-btn">Logout</button>
       </div>
@@ -71,6 +74,22 @@
       <div class="modal-actions">
         <button id="btnCancelCreate" class="ghost small-btn">Annulla</button>
         <button id="btnConfirmCreate" class="primary small-btn">Crea</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="profileImportModal" class="modal hidden">
+    <div class="modal-content">
+      <h3>Importa profilo</h3>
+      <div class="modal-body">
+        <div><strong>Profilo:</strong> <span id="profImpName"></span></div>
+        <div><strong>ID:</strong> <span id="profImpId"></span></div>
+        <div><strong>Album:</strong> <span id="profImpAlbumCount"></span></div>
+        <div><strong>Totale figurine possedute:</strong> <span id="profImpOwned"></span></div>
+      </div>
+      <div class="modal-actions">
+        <button id="btnCancelProfileImport" class="ghost small-btn">Annulla</button>
+        <button id="btnConfirmProfileImport" class="primary small-btn">Importa</button>
       </div>
     </div>
   </div>

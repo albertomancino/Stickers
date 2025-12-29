@@ -28,6 +28,16 @@
   const elModalDup = document.getElementById("modalDup");
   const elBtnCancelImport = document.getElementById("btnCancelImport");
   const elBtnConfirmImport = document.getElementById("btnConfirmImport");
+  const elBtnExportProfile = document.getElementById("btnExportProfile");
+  const elBtnImportProfile = document.getElementById("btnImportProfile");
+  const elProfileImportFile = document.getElementById("profileImportFile");
+  const elProfileImpModal = document.getElementById("profileImportModal");
+  const elProfImpName = document.getElementById("profImpName");
+  const elProfImpId = document.getElementById("profImpId");
+  const elProfImpAlbumCount = document.getElementById("profImpAlbumCount");
+  const elProfImpOwned = document.getElementById("profImpOwned");
+  const elBtnCancelProfileImport = document.getElementById("btnCancelProfileImport");
+  const elBtnConfirmProfileImport = document.getElementById("btnConfirmProfileImport");
   const elNewAlbum = document.getElementById("btnNewAlbum");
   const elCreateModal = document.getElementById("createModal");
   const elCreateName = document.getElementById("modalCreateName");
@@ -35,12 +45,17 @@
   const elBtnConfirmCreate = document.getElementById("btnConfirmCreate");
   const elBtnCompare = document.getElementById("btnCompare");
   let pendingImport = null; // holds parsed import until confirm
+  let pendingProfileImport = null;
 
   elWelcome.textContent = `Ciao ${profile.name}`;
   const params = new URLSearchParams(window.location.search);
   if (params.get("msg") === "album_deleted") {
     showToast("Album non trovato (forse eliminato).");
-    history.replaceState({}, document.title, "dashboard.html");
+    history.replaceState({}, document.title, "./dashboard.html");
+  }
+  if (params.get("msg") === "profile_imported") {
+    showToast("Profilo importato ✅");
+    history.replaceState({}, document.title, "./dashboard.html");
   }
 
   function renderAlbums() {
@@ -158,6 +173,83 @@
   if (elBtnCompare) {
     elBtnCompare.onclick = () => {
       window.location.href = "compare.html";
+    };
+  }
+  if (elBtnExportProfile) {
+    elBtnExportProfile.onclick = () => {
+      const payload = Storage.buildProfileExport(store, profile.id);
+      if (!payload) {
+        showToast("Nessun profilo da esportare.");
+        return;
+      }
+      const shortId = profile.id.slice(0, 8);
+      triggerDownload(payload, Storage.sanitizeFileName(`profilo_${profile.name}_${shortId}_panini.json`));
+    };
+  }
+  if (elBtnImportProfile) {
+    elBtnImportProfile.onclick = () => elProfileImportFile?.click();
+  }
+  if (elProfileImportFile) {
+    elProfileImportFile.onchange = (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const parsed = JSON.parse(reader.result);
+          const check = Storage.validateProfileImport(parsed);
+          if (!check.ok) {
+            showToast(check.error || "File profilo non valido.");
+            return;
+          }
+          const albumsCount = Array.isArray(parsed.albums) ? parsed.albums.length : 0;
+          let owned = 0;
+          if (parsed.tracks) {
+            for (const aid in parsed.tracks) {
+              const stickers = parsed.tracks[aid]?.stickers || {};
+              owned += Object.keys(stickers).length;
+            }
+          }
+          elProfImpName.textContent = parsed.profile.name;
+          elProfImpId.textContent = parsed.profile.id.slice(0, 8);
+          elProfImpAlbumCount.textContent = albumsCount;
+          elProfImpOwned.textContent = owned;
+          pendingProfileImport = { parsed };
+          elProfileImpModal.classList.remove("hidden");
+        } catch {
+          showToast("Errore nel leggere il file.");
+        } finally {
+          elProfileImportFile.value = "";
+        }
+      };
+      reader.readAsText(file);
+    };
+  }
+  if (elBtnCancelProfileImport) {
+    elBtnCancelProfileImport.onclick = () => {
+      pendingProfileImport = null;
+      elProfileImpModal.classList.add("hidden");
+    };
+  }
+  if (elBtnConfirmProfileImport) {
+    elBtnConfirmProfileImport.onclick = () => {
+      if (!pendingProfileImport) return;
+      const { parsed } = pendingProfileImport;
+      const exists = store.profiles.some(p => p.id === parsed.profile.id);
+      if (exists) {
+        const ok = confirm("Questo profilo esiste già su questo dispositivo. Vuoi SOVRASCRIVERLO?");
+        if (!ok) { pendingProfileImport = null; elProfileImpModal.classList.add("hidden"); return; }
+      }
+      const res = Storage.applyProfileImport(store, parsed, exists);
+      if (!res.ok && res.reason === "exists") {
+        showToast("Profilo già presente. Sovrascrivi per importare.");
+        pendingProfileImport = null;
+        elProfileImpModal.classList.add("hidden");
+        return;
+      }
+      pendingProfileImport = null;
+      elProfileImpModal.classList.add("hidden");
+      window.location.href = "./dashboard.html?msg=profile_imported";
     };
   }
   if (elBtnCancelCreate) {
@@ -282,7 +374,7 @@
 
   elLogout.onclick = () => {
     Storage.clearActiveProfile(store);
-    window.location.href = "index.html";
+    window.location.href = "./index.html";
   };
 
   function deleteAlbum(albumId, albumName, btn) {

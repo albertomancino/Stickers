@@ -55,6 +55,34 @@ const Storage = {
     return album;
   },
 
+  deleteProfile(store, profileId) {
+    const beforeProfiles = store.profiles.length;
+    const albumIds = store.albums.filter(a => a.profileId === profileId).map(a => a.id);
+    store.profiles = store.profiles.filter(p => p.id !== profileId);
+    store.albums = store.albums.filter(a => a.profileId !== profileId);
+    if (store.tracks && store.tracks[profileId]) {
+      delete store.tracks[profileId];
+    }
+    // remove proposal persisted selections tied to this profile's albums
+    try {
+      const keys = Object.keys(localStorage);
+      for (const key of keys) {
+        for (const aid of albumIds) {
+          if (key.startsWith(`proposal:${aid}:`)) {
+            localStorage.removeItem(key);
+          }
+        }
+      }
+    } catch {
+      // ignore cleanup errors
+    }
+    if (store.activeProfileId === profileId) {
+      store.activeProfileId = store.profiles[0]?.id || null;
+    }
+    this.save(store);
+    return store.profiles.length !== beforeProfiles;
+  },
+
   addFriendAlbum(store, profileId, data) {
     const friendAlbum = {
       id: uuid(),
@@ -115,6 +143,60 @@ const Storage = {
       catalogHint: { count: (typeof STICKER_CATALOG !== "undefined" && STICKER_CATALOG.length) ? STICKER_CATALOG.length : 0 },
       stickers: cleaned
     };
+  },
+
+  buildProfileExport(store, profileId) {
+    const profile = store.profiles.find(p => p.id === profileId);
+    if (!profile) return null;
+    const albums = store.albums.filter(a => a.profileId === profileId);
+    const tracks = store.tracks?.[profileId] ? { ...store.tracks[profileId] } : {};
+    return {
+      schema: "panini-profile/v1",
+      exportedAt: new Date().toISOString(),
+      profile: { id: profile.id, name: profile.name, createdAt: profile.createdAt },
+      albums,
+      tracks
+    };
+  },
+
+  validateProfileImport(data) {
+    if (!data || typeof data !== "object") return { ok: false, error: "JSON non valido." };
+    if (data.schema !== "panini-profile/v1") return { ok: false, error: "Schema non supportato." };
+    if (!data.profile || typeof data.profile.id !== "string" || !data.profile.id.trim()) return { ok: false, error: "Profilo mancante o senza id." };
+    if (!data.profile.name || typeof data.profile.name !== "string") return { ok: false, error: "Nome profilo mancante." };
+    if (!Array.isArray(data.albums)) return { ok: false, error: "Albums non valido." };
+    if (!data.tracks || typeof data.tracks !== "object") return { ok: false, error: "Tracks non valido." };
+    return { ok: true };
+  },
+
+  applyProfileImport(store, payload, overwrite) {
+    const pid = payload.profile.id;
+    const existingIdx = store.profiles.findIndex(p => p.id === pid);
+    if (existingIdx !== -1 && overwrite) {
+      store.profiles[existingIdx] = { ...payload.profile };
+      // remove old albums/tracks for this profile
+      store.albums = store.albums.filter(a => a.profileId !== pid);
+      if (store.tracks[pid]) delete store.tracks[pid];
+    } else if (existingIdx === -1) {
+      store.profiles.push({ ...payload.profile });
+    } else {
+      return { ok: false, reason: "exists" };
+    }
+
+    // add albums
+    for (const alb of payload.albums) {
+      store.albums.push({ ...alb, profileId: pid });
+    }
+
+    // add tracks
+    if (!store.tracks[pid]) store.tracks[pid] = {};
+    for (const aid in payload.tracks) {
+      store.tracks[pid][aid] = payload.tracks[aid];
+    }
+
+    store.activeProfileId = pid;
+    this.save(store);
+    return { ok: true };
   },
 
   validateImport(data) {
@@ -193,11 +275,6 @@ const Storage = {
       friendAlbums: Array.isArray(raw.friendAlbums) ? raw.friendAlbums : []
     };
 
-    if (!base.profiles.length) {
-      const p = { id: uuid(), name: "Profilo", createdAt: Date.now() };
-      base.profiles = [p];
-      base.activeProfileId = p.id;
-    }
     // ensure profiles have id
     for (const p of base.profiles) {
       if (!p.id) p.id = uuid();
@@ -216,7 +293,7 @@ const Storage = {
 
     // ensure activeProfileId is valid
     if (!base.profiles.some(p => p.id === base.activeProfileId)) {
-      base.activeProfileId = base.profiles[0].id;
+      base.activeProfileId = base.profiles[0]?.id || null;
     }
 
     // clean tracks
