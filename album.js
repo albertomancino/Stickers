@@ -352,6 +352,7 @@
         const metaParts = [];
         if (item.Section) metaParts.push(item.Section);
         if (item.Type) metaParts.push(item.Type);
+        const qty = val === null ? 0 : val;
         const rowHtml = `
           <div class="sticker-block" data-id="${id}">
             <div class="row">
@@ -359,7 +360,11 @@
                 <div class="row-title">#${id} — ${item.Title || ""}</div>
                 <div class="row-meta">${metaParts.join(" · ")}</div>
               </div>
-              <div class="badge ${status.className}">${status.label}</div>
+              <div class="row-actions">
+                <button class="row-action" data-act="dec" data-id="${id}" ${qty <= 0 ? "disabled" : ""}>-</button>
+                <button class="row-action" data-act="inc" data-id="${id}">+</button>
+                <div class="badge ${status.className}">${status.label}</div>
+              </div>
             </div>
             <div class="sticker-detail ${openDetailId === id ? "" : "hidden"}">
               <div class="detail-line"><strong>Sezione:</strong> ${item.Section || "-"}</div>
@@ -432,11 +437,18 @@
           openDetailId = (openDetailId === id) ? null : id;
           renderList();
         };
+        block.querySelectorAll(".row-action").forEach(btn => {
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            const act = btn.getAttribute("data-act");
+            handleDetailAction(act, id, block);
+          };
+        });
         detail.addEventListener("click", (e) => {
           const btn = e.target.closest("button[data-act]");
           if (!btn) return;
           const act = btn.getAttribute("data-act");
-          handleDetailAction(act, id);
+          handleDetailAction(act, id, block);
         });
       });
       elStickerList.querySelectorAll(".sectionHeader").forEach(btn => {
@@ -450,7 +462,7 @@
       });
     }
 
-    function handleDetailAction(act, id) {
+    function handleDetailAction(act, id, blockEl) {
       const val = getVal(id);
       if (act === "dec") {
         const cur = (val === null) ? 0 : val;
@@ -465,6 +477,10 @@
       }
       persist();
       render();
+      if (blockEl) {
+        blockEl.classList.add("row-flash");
+        setTimeout(() => blockEl.classList.remove("row-flash"), 200);
+      }
     }
 
     function getStatus(val) {

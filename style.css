@@ -95,6 +95,11 @@ button:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 18p
 /* sticker rows */
 #stickerList .row { transition: background 0.15s ease, transform 0.1s ease; }
 #stickerList .row:hover { background: #f1f5f9; transform: translateY(-1px); }
+.row-actions { display: flex; align-items: center; gap: 8px; }
+.row-action { padding: 6px 10px; border-radius: 10px; border: 1px solid var(--border); background: #f8fafc; min-width: 36px; }
+.row-action:hover:not(:disabled) { background: #e5edff; border-color: #c7d2fe; }
+.row-flash { animation: rowFlash 0.25s ease; }
+@keyframes rowFlash { from { background: #e0f2fe; } to { background: transparent; } }
 
 /* mode switch */
 .mode-switch { display: flex; gap: 8px; margin-bottom: 10px; }
