@@ -80,7 +80,14 @@ button:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 18p
 .detail-line { font-size: 14px; margin: 4px 0; color: var(--text); }
 .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: rgba(15,23,42,0.95); color: #fff; padding: 12px 16px; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,0,0,0.25); z-index: 1000; transition: opacity 0.2s ease, transform 0.2s ease; }
 .toast.hidden { opacity: 0; pointer-events: none; transform: translateX(-50%) translateY(10px); }
-.action-buttons { display: flex; gap: 8px; }
+.action-buttons { display: flex; gap: 8px; align-items: center; }
+.album-card { align-items: flex-start; }
+.album-info { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+.album-name { font-size: 17px; font-weight: 800; color: var(--text); }
+.album-stats { line-height: 1.4; }
+.progress-track.small-track { height: 8px; background: #e5e7eb; border-radius: 999px; overflow: hidden; border: 1px solid #e5e7eb; }
+.progress-track.small-track .progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), #60a5fa); border-radius: 999px; transition: width 0.3s ease; }
+.btn-danger.outline { background: #fff1f2; color: var(--danger); border-color: #fecdd3; }
 
 /* Album counters + progress */
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 12px; }

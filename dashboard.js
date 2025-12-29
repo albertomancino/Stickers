@@ -39,9 +39,16 @@
 
     for (const album of albums) {
       const row = document.createElement("div");
-      row.className = "list-row";
+      row.className = "list-row album-card";
       const info = document.createElement("div");
-      info.innerHTML = `<strong>${album.name}</strong><br><span class="muted small">${album.total} figurine</span>`;
+      info.className = "album-info";
+      const stats = computeAlbumStats(album);
+      const pct = Math.min(100, Math.max(0, (stats.owned / album.total) * 100));
+      info.innerHTML = `
+        <div class="album-name">${album.name}</div>
+        <div class="album-stats muted small">Mancanti: ${stats.missing} • Ce l’ho: ${stats.owned}${stats.dup ? ` • Doppie: ${stats.dup}` : ""}</div>
+        <div class="progress-track small-track"><div class="progress-fill" style="width:${pct}%;"></div></div>
+      `;
       const actions = document.createElement("div");
       actions.className = "action-buttons";
 
@@ -54,7 +61,7 @@
 
       const btnDel = document.createElement("button");
       btnDel.textContent = "🗑️ Elimina";
-      btnDel.className = "small-btn";
+      btnDel.className = "small-btn btn-danger outline";
       btnDel.onclick = () => deleteAlbum(album.id, album.name, btnDel);
 
       actions.appendChild(btnOpen);
@@ -103,6 +110,21 @@
     toastTimer = setTimeout(() => {
       elToast.classList.add("hidden");
     }, 2000);
+  }
+
+  function computeAlbumStats(album) {
+    const track = store.tracks[profile.id]?.[album.id];
+    if (!track || !track.stickers) {
+      return { missing: album.total, owned: 0, dup: 0 };
+    }
+    let owned = 0, dup = 0;
+    for (const k in track.stickers) {
+      const v = track.stickers[k];
+      if (v >= 1) owned++;
+      if (v >= 2) dup++;
+    }
+    const missing = album.total - owned;
+    return { missing, owned, dup };
   }
 
   renderAlbums();

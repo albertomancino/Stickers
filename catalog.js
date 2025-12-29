@@ -170,7 +170,7 @@ const STICKER_CATALOG = [
   },
   {
     "No": 29,
-    "Title": "Álvaro Morata (Como)",
+    "Title": "Edin Dzeko (Fiorentina)",
     "Section": "Nuove Firma in Citta",
     "Type": "-"
   },
@@ -2528,7 +2528,7 @@ const STICKER_CATALOG = [
   },
   {
     "No": 406,
-    "Title": "Lorenzo Pellegrini",
+    "Title": "Bryan Cristante",
     "Section": "Roma",
     "Type": "-"
   },
