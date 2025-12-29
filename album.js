@@ -49,6 +49,8 @@
   const elStatOwned = document.getElementById("statOwned");
   const elStatDup = document.getElementById("statDup");
   const elStatUnrated = document.getElementById("statUnrated");
+  const elProgressFill = document.getElementById("progressFill");
+  const elProgressText = document.getElementById("progressText");
 
   document.getElementById("btnBack").onclick = () => window.location.href = "dashboard.html";
   document.getElementById("btnLogout").onclick = () => {
@@ -320,6 +322,13 @@
       elStatOwned.textContent = counts.owned;
       elStatDup.textContent = counts.dup;
       elStatUnrated.textContent = counts.unrated;
+      if (elProgressFill) {
+        const pctNum = Math.min(100, Math.max(0, counts.rated / STICKER_IDS.length * 100));
+        elProgressFill.style.width = `${pctNum}%`;
+      }
+      if (elProgressText) {
+        elProgressText.textContent = `${ratedPct}%`;
+      }
     }
 
     function renderList() {

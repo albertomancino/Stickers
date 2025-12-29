@@ -5,8 +5,9 @@
   --muted: #6b7280;
   --border: #e5e7eb;
   --primary: #2563eb;
-  --primaryText: #ffffff;
+  --success: #16a34a;
   --danger: #ef4444;
+  --primaryText: #ffffff;
   --dangerText: #ffffff;
   --badgeMissing: #fee2e2;
   --badgeOwned: #dcfce7;
@@ -81,14 +82,23 @@ button:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 18p
 .toast.hidden { opacity: 0; pointer-events: none; transform: translateX(-50%) translateY(10px); }
 .action-buttons { display: flex; gap: 8px; }
 
-/* Album counters pills */
+/* Album counters + progress */
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 12px; }
 .stats div { background: #f8fafc; border: 1px solid var(--border); border-radius: 12px; padding: 10px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.6); }
 .stats strong { display: block; font-size: 17px; }
 .stats .muted { margin: 4px 0 0; }
+.progress-shell { margin-bottom: 12px; }
+.progress-label { display: flex; justify-content: space-between; align-items: center; font-weight: 600; color: var(--text); }
+.progress-track { width: 100%; height: 10px; background: #e5e7eb; border-radius: 999px; overflow: hidden; margin-top: 6px; }
+#progressFill { height: 100%; width: 0; background: linear-gradient(90deg, var(--primary), #60a5fa); border-radius: 999px; transition: width 0.3s ease; }
 
-#stickerList .row { transition: background 0.15s ease; }
-#stickerList .row:hover { background: #f1f5f9; }
+/* sticker rows */
+#stickerList .row { transition: background 0.15s ease, transform 0.1s ease; }
+#stickerList .row:hover { background: #f1f5f9; transform: translateY(-1px); }
+
+/* mode switch */
+.mode-switch { display: flex; gap: 8px; margin-bottom: 10px; }
+.mode-switch .primary { box-shadow: 0 6px 14px rgba(37,99,235,0.25); }
 
 /* mobile tweaks */
 @media (max-width: 640px) {
