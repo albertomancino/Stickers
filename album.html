@@ -38,7 +38,6 @@
         <div><strong id="statMissing"></strong><span class="muted small">Mancanti</span></div>
         <div><strong id="statOwned"></strong><span class="muted small">Ce l’ho</span></div>
         <div><strong id="statDup"></strong><span class="muted small">Doppie</span></div>
-        <div><strong id="statUnrated"></strong><span class="muted small">Non valutate</span></div>
       </div>
 
       <div class="controls viewer-controls">
@@ -48,7 +47,6 @@
           <option value="MISSING">Mancanti</option>
           <option value="OWNED">Ce l’ho</option>
           <option value="DUPLICATES">Doppie</option>
-          <option value="UNRATED">Non valutate</option>
         </select>
         <label for="sectionSelect">Sezione:</label>
         <select id="sectionSelect">
@@ -66,7 +64,9 @@
           Filtro:
           <select id="filterSelect">
             <option value="ALL">Tutte</option>
-            <option value="UNRATED">Solo non valutate</option>
+            <option value="MISSING">Mancanti</option>
+            <option value="OWNED">Ce l’ho</option>
+            <option value="DUPLICATES">Doppie</option>
           </select>
         </label>
         <button id="btnExitPopulate" class="ghost small-btn">Torna a lista</button>

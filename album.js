@@ -48,7 +48,6 @@
   const elStatMissing = document.getElementById("statMissing");
   const elStatOwned = document.getElementById("statOwned");
   const elStatDup = document.getElementById("statDup");
-  const elStatUnrated = document.getElementById("statUnrated");
   const elProgressFill = document.getElementById("progressFill");
   const elProgressText = document.getElementById("progressText");
 
@@ -83,6 +82,8 @@
     let statusFilter = "ALL";
     let sectionFilter = track.viewerSection || "ALL";
     let collapsedSections = track.collapsedSections || {};
+    const allowedFilters = new Set(["ALL","MISSING","OWNED","DUPLICATES"]);
+    if (!allowedFilters.has(track.filter)) track.filter = "ALL";
 
     elAlbumName.textContent = album.name;
     elProfileName.textContent = `Profilo: ${profile.name}`;
@@ -93,10 +94,9 @@
     document.getElementById("btnExitPopulate").onclick = () => switchMode("viewer");
 
     elFilterSelect.onchange = () => {
-      track.filter = elFilterSelect.value === "UNRATED" ? "UNRATED" : "ALL";
-      if (track.filter === "UNRATED" && getVal(currentId) !== null) {
-        goToNextUnrated(true);
-      }
+      const val = elFilterSelect.value;
+      const allowed = new Set(["ALL","MISSING","OWNED","DUPLICATES"]);
+      track.filter = allowed.has(val) ? val : "ALL";
       persist();
       render();
     };
@@ -171,11 +171,11 @@
 
     function getVal(stickerId) {
       const v = track.stickers[stickerId];
-      return (v === undefined) ? null : v;
+      return (v === undefined || v === null) ? 0 : v;
     }
 
     function setVal(stickerId, v) {
-      if (v === null) delete track.stickers[stickerId];
+      if (v === null || v <= 0) delete track.stickers[stickerId];
       else track.stickers[stickerId] = v;
     }
 
@@ -208,50 +208,41 @@
       render();
     }
 
-    function goToNextUnrated(fromCurrent) {
-      const starts = fromCurrent ? [currentId, STICKER_IDS[0]] : [STICKER_IDS[0]];
-      for (const start of starts) {
-        const startIndex = STICKER_IDS.indexOf(start);
-        if (startIndex === -1) continue;
-        for (let i = startIndex; i < STICKER_IDS.length; i++) {
-          const id = STICKER_IDS[i];
-          if (getVal(id) === null) {
-            currentId = id;
-            persist();
-            return true;
-          }
-        }
-      }
-      return false;
-    }
-
     function next() {
-      if (track.filter === "UNRATED") {
-        const ok = goToNextUnrated(true);
-        if (!ok) return;
-        render();
-        return;
-      }
       const idx = STICKER_IDS.indexOf(currentId);
-      if (idx >= 0 && idx < STICKER_IDS.length - 1) {
-        currentId = STICKER_IDS[idx + 1];
-        persist();
-      }
+      const start = idx >= 0 ? idx + 1 : 0;
+      const found = findNextMatching(start);
+      if (found) currentId = found;
+      persist();
       render();
     }
 
-    function computeCounts() {
-      let missing = 0, owned = 0, dup = 0;
-      const rated = Object.keys(track.stickers).length;
-      const unrated = STICKER_IDS.length - rated;
+    function findNextMatching(startIndex) {
+      for (let i = startIndex; i < STICKER_IDS.length; i++) {
+        const id = STICKER_IDS[i];
+        const copies = getVal(id);
+        if (matchesFilter(copies)) return id;
+      }
+      return null;
+    }
 
+    function matchesFilter(copies) {
+      if (track.filter === "MISSING") return copies === 0;
+      if (track.filter === "OWNED") return copies >= 1;
+      if (track.filter === "DUPLICATES") return copies >= 2;
+      return true; // ALL
+    }
+
+    function computeCounts() {
+      let owned = 0, dup = 0;
+      const rated = Object.keys(track.stickers).length;
       for (const k in track.stickers) {
         const v = track.stickers[k];
-        if (v === 0) missing++;
-        else if (v === 1) owned++;
-        else if (v >= 2) dup++;
+        if (v >= 1) owned++;
+        if (v >= 2) dup++;
       }
-      return { unrated, missing, owned, dup, rated };
+      const missing = STICKER_IDS.length - owned;
+      return { missing, owned, dup, rated };
     }
 
     function parseNumbers(input) {
@@ -290,9 +281,9 @@
 
       for (const id of ids) {
         const prev = getVal(id);
-        const cur0 = (prev === null) ? 0 : prev;
+        const cur0 = prev;
         if (mode === "ADD_ONE") setVal(id, cur0 + 1);
-        else if (mode === "SET_MISSING") setVal(id, 0);
+        else if (mode === "SET_MISSING") setVal(id, null);
       }
 
       persist();
@@ -302,7 +293,8 @@
 
     function persist() {
       track.currentId = currentId;
-      track.filter = track.filter === "UNRATED" ? "UNRATED" : "ALL";
+      const allowed = new Set(["ALL","MISSING","OWNED","DUPLICATES"]);
+      track.filter = allowed.has(track.filter) ? track.filter : "ALL";
       track.viewerSection = sectionFilter;
       track.collapsedSections = collapsedSections;
       Storage.save(store);
@@ -321,7 +313,6 @@
       elStatMissing.textContent = counts.missing;
       elStatOwned.textContent = counts.owned;
       elStatDup.textContent = counts.dup;
-      elStatUnrated.textContent = counts.unrated;
       if (elProgressFill) {
         const pctNum = Math.min(100, Math.max(0, counts.rated / STICKER_IDS.length * 100));
         elProgressFill.style.width = `${pctNum}%`;
@@ -344,7 +335,6 @@
         if (statusFilter === "MISSING" && status.key !== "missing") continue;
         if (statusFilter === "OWNED" && status.key !== "owned") continue;
         if (statusFilter === "DUPLICATES" && status.key !== "dup") continue;
-        if (statusFilter === "UNRATED" && status.key !== "unrated") continue;
         if (q) {
           const hay = `${id} ${item.Title || ""}`.toLowerCase();
           if (!hay.includes(q)) continue;
@@ -352,7 +342,7 @@
         const metaParts = [];
         if (item.Section) metaParts.push(item.Section);
         if (item.Type) metaParts.push(item.Type);
-        const qty = val === null ? 0 : val;
+        const qty = val;
         const rowHtml = `
           <div class="sticker-block" data-id="${id}">
             <div class="row">
@@ -383,7 +373,6 @@
         if (status.key === "missing") bucket.stats.missing++;
         else if (status.key === "owned") bucket.stats.owned++;
         else if (status.key === "dup") bucket.stats.dup++;
-        else if (status.key === "unrated") bucket.stats.unrated++;
       }
 
       const parts = [];
@@ -400,7 +389,7 @@
           const isCollapsed = !!collapsedSections[sec];
           if (isCollapsed) collapsedVisible++;
           const caret = isCollapsed ? "▶" : "▼";
-          const statsTxt = `Mancanti: ${bucket.stats.missing} · Ce l’ho: ${bucket.stats.owned} · Doppie: ${bucket.stats.dup} · Non val.: ${bucket.stats.unrated}`;
+          const statsTxt = `Mancanti: ${bucket.stats.missing} · Ce l’ho: ${bucket.stats.owned} · Doppie: ${bucket.stats.dup}`;
           parts.push(`
             <div class="sectionGroup ${isCollapsed ? "collapsed" : ""}" data-section="${sec}">
               <button class="sectionHeader" type="button" data-section="${sec}" id="section-${slug}">
@@ -462,13 +451,11 @@
     function handleDetailAction(act, id, blockEl) {
       const val = getVal(id);
       if (act === "dec") {
-        const cur = (val === null) ? 0 : val;
+        const cur = val;
         setVal(id, Math.max(0, cur - 1));
       } else if (act === "inc") {
-        const cur = (val === null) ? 0 : val;
+        const cur = val;
         setVal(id, cur + 1);
-      } else if (act === "missing") {
-        setVal(id, 0);
       } else if (act === "reset") {
         setVal(id, null);
       }
@@ -481,7 +468,6 @@
     }
 
     function getStatus(val) {
-      if (val === null) return { key: "unrated", label: "Non valutata", className: "unrated" };
       if (val === 0) return { key: "missing", label: "Manca", className: "missing" };
       if (val === 1) return { key: "owned", label: "Ce l’ho", className: "owned" };
       return { key: "dup", label: `Doppie (${val - 1})`, className: "dup" };

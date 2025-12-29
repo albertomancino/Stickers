@@ -76,9 +76,15 @@ const Storage = {
     if (!track.currentId || (validIds && !validIds.has(track.currentId))) {
       track.currentId = defaultStickerId;
     }
-    if (track.filter !== "UNRATED") track.filter = "ALL";
+    const allowedFilters = new Set(["ALL","MISSING","OWNED","DUPLICATES"]);
+    if (!allowedFilters.has(track.filter)) track.filter = "ALL";
     if (!track.stickers || typeof track.stickers !== "object") track.stickers = {};
     if (!track.viewerSection) track.viewerSection = "ALL";
+    // migrate old values: remove zeros/nulls
+    for (const key of Object.keys(track.stickers)) {
+      const v = track.stickers[key];
+      if (v === null || v === 0) delete track.stickers[key];
+    }
     return track;
   },
 
