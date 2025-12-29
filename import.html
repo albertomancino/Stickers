@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#2f5eea" />
+  <title>Panini Tracker · Import</title>
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <main class="wrap">
+    <header class="top">
+      <h1>Importa da cloud</h1>
+      <button id="btnBack" class="ghost small-btn">Dashboard</button>
+    </header>
+
+    <section class="card">
+      <div class="field">
+        <label for="tokenInput">Incolla link o token</label>
+        <input id="tokenInput" type="text" placeholder="https://...#TOKEN oppure TOKEN" />
+      </div>
+      <button id="btnFetch" class="primary">Carica</button>
+      <div id="status" class="muted small"></div>
+    </section>
+
+    <section id="previewCard" class="card hidden">
+      <h3>Anteprima</h3>
+      <div id="previewContent"></div>
+      <div class="modal-actions" style="margin-top:12px;">
+        <button id="btnCancel" class="ghost small-btn">Annulla</button>
+        <button id="btnImport" class="primary small-btn">Importa</button>
+      </div>
+    </section>
+
+    <div id="toast" class="toast hidden"></div>
+  </main>
+
+  <script src="./storage.js"></script>
+  <script src="./pwa.js"></script>
+  <script src="./import.js"></script>
+</body>
+</html>

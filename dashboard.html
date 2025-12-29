@@ -16,6 +16,8 @@
         <button id="btnExportProfile" class="ghost small-btn">Esporta profilo</button>
         <button id="btnImportProfile" class="ghost small-btn">Importa profilo</button>
         <input id="profileImportFile" type="file" accept="application/json" class="hidden" />
+        <button id="btnCloudProfile" class="ghost small-btn">Carica profilo su cloud</button>
+        <button id="btnImportLink" class="ghost small-btn">Importa da link</button>
         <button id="btnCompare" class="ghost small-btn">Confronta album</button>
         <button id="btnLogout" class="ghost small-btn">Logout</button>
       </div>
@@ -74,6 +76,51 @@
       <div class="modal-actions">
         <button id="btnCancelCreate" class="ghost small-btn">Annulla</button>
         <button id="btnConfirmCreate" class="primary small-btn">Crea</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="cloudModal" class="modal hidden">
+    <div class="modal-content">
+      <h3>Link generato</h3>
+      <div class="modal-body">
+        <div class="field">
+          <label>Condividi questo link</label>
+          <input id="cloudLink" type="text" readonly />
+        </div>
+        <div class="muted small">Il link scade automaticamente dopo qualche settimana.</div>
+      </div>
+      <div class="modal-actions">
+        <button id="btnCloseCloud" class="ghost small-btn">Chiudi</button>
+        <button id="btnCopyCloud" class="primary small-btn">Copia</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="linkModal" class="modal hidden">
+    <div class="modal-content">
+      <h3>Importa da link</h3>
+      <div class="modal-body">
+        <div class="field">
+          <label for="linkInput">Token o URL</label>
+          <input id="linkInput" type="text" placeholder="Incolla il link ricevuto" />
+        </div>
+        <div id="linkStatus" class="muted small"></div>
+      </div>
+      <div class="modal-actions">
+        <button id="btnCancelLink" class="ghost small-btn">Annulla</button>
+        <button id="btnFetchLink" class="primary small-btn">Carica</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="sharePreviewModal" class="modal hidden">
+    <div class="modal-content">
+      <h3>Anteprima import</h3>
+      <div id="sharePreviewBody" class="modal-body"></div>
+      <div class="modal-actions">
+        <button id="btnCancelShare" class="ghost small-btn">Annulla</button>
+        <button id="btnConfirmShare" class="primary small-btn">Importa</button>
       </div>
     </div>
   </div>

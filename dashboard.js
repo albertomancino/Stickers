@@ -46,6 +46,23 @@
   const elBtnCompare = document.getElementById("btnCompare");
   let pendingImport = null; // holds parsed import until confirm
   let pendingProfileImport = null;
+  const CLOUD_BASE = "https://<your-project-ref>.functions.supabase.co/functions/v1";
+  const elBtnCloudProfile = document.getElementById("btnCloudProfile");
+  const elBtnImportLink = document.getElementById("btnImportLink");
+  const elCloudModal = document.getElementById("cloudModal");
+  const elCloudLink = document.getElementById("cloudLink");
+  const elBtnCloseCloud = document.getElementById("btnCloseCloud");
+  const elBtnCopyCloud = document.getElementById("btnCopyCloud");
+  const elLinkModal = document.getElementById("linkModal");
+  const elLinkInput = document.getElementById("linkInput");
+  const elLinkStatus = document.getElementById("linkStatus");
+  const elBtnCancelLink = document.getElementById("btnCancelLink");
+  const elBtnFetchLink = document.getElementById("btnFetchLink");
+  const elSharePreviewModal = document.getElementById("sharePreviewModal");
+  const elSharePreviewBody = document.getElementById("sharePreviewBody");
+  const elBtnCancelShare = document.getElementById("btnCancelShare");
+  const elBtnConfirmShare = document.getElementById("btnConfirmShare");
+  let pendingShare = null;
 
   elWelcome.textContent = `Ciao ${profile.name}`;
   const params = new URLSearchParams(window.location.search);
@@ -98,6 +115,11 @@
         btnExport.className = "ghost small-btn";
         btnExport.onclick = () => exportAlbum(album.id, album.name, profile.name);
 
+        const btnCloud = document.createElement("button");
+        btnCloud.textContent = "☁️ Carica su cloud";
+        btnCloud.className = "ghost small-btn";
+        btnCloud.onclick = () => uploadAlbum(album.id, false);
+
         const btnDel = document.createElement("button");
         btnDel.textContent = "🗑️ Elimina";
         btnDel.className = "small-btn btn-danger outline";
@@ -105,6 +127,7 @@
 
         actions.appendChild(btnOpen);
         actions.appendChild(btnExport);
+        actions.appendChild(btnCloud);
         actions.appendChild(btnDel);
         row.appendChild(info);
         row.appendChild(actions);
@@ -148,6 +171,11 @@
         btnExport.className = "ghost small-btn";
         btnExport.onclick = () => exportFriend(entry.id, entry.album.name, entry.ownerName);
 
+        const btnCloud = document.createElement("button");
+        btnCloud.textContent = "☁️ Carica su cloud";
+        btnCloud.className = "ghost small-btn";
+        btnCloud.onclick = () => uploadAlbum(entry.id, true);
+
         const btnRemove = document.createElement("button");
         btnRemove.textContent = "🗑️ Rimuovi";
         btnRemove.className = "small-btn btn-danger outline";
@@ -155,6 +183,7 @@
 
         actions.appendChild(btnOpen);
         actions.appendChild(btnExport);
+        actions.appendChild(btnCloud);
         actions.appendChild(btnRemove);
         row.appendChild(info);
         row.appendChild(actions);
@@ -250,6 +279,57 @@
       pendingProfileImport = null;
       elProfileImpModal.classList.add("hidden");
       window.location.href = "./dashboard.html?msg=profile_imported";
+    };
+  }
+  if (elBtnCloudProfile) {
+    elBtnCloudProfile.onclick = async () => {
+      const payload = Storage.buildProfileExport(store, profile.id);
+      if (!payload) { showToast("Nessun profilo."); return; }
+      await createShare("profile", payload);
+    };
+  }
+  if (elBtnImportLink) {
+    elBtnImportLink.onclick = () => {
+      elLinkInput.value = "";
+      elLinkStatus.textContent = "";
+      elLinkModal.classList.remove("hidden");
+      setTimeout(() => elLinkInput.focus(), 50);
+    };
+  }
+  if (elBtnCancelLink) {
+    elBtnCancelLink.onclick = () => {
+      elLinkModal.classList.add("hidden");
+      elLinkStatus.textContent = "";
+    };
+  }
+  if (elBtnFetchLink) {
+    elBtnFetchLink.onclick = async () => {
+      const token = parseToken(elLinkInput.value);
+      if (!token) { elLinkStatus.textContent = "Inserisci un token valido."; return; }
+      elLinkStatus.textContent = "Caricamento...";
+      const data = await fetchShare(token);
+      if (!data) { elLinkStatus.textContent = "Token non valido o scaduto."; return; }
+      pendingShare = data;
+      renderSharePreview(data);
+      elLinkModal.classList.add("hidden");
+      elSharePreviewModal.classList.remove("hidden");
+    };
+  }
+  if (elBtnCancelShare) {
+    elBtnCancelShare.onclick = () => {
+      pendingShare = null;
+      elSharePreviewModal.classList.add("hidden");
+    };
+  }
+  if (elBtnConfirmShare) {
+    elBtnConfirmShare.onclick = async () => {
+      if (!pendingShare) return;
+      const ok = await importPayload(pendingShare);
+      if (ok) {
+        elSharePreviewModal.classList.add("hidden");
+        renderAlbums();
+      }
+      pendingShare = null;
     };
   }
   if (elBtnCancelCreate) {
@@ -443,6 +523,148 @@
     triggerDownload(payload, Storage.sanitizeFileName(`${albumName}_${owner}_panini.json`));
   }
 
+  function uploadAlbum(id, isFriend) {
+    const payload = isFriend
+      ? Storage.exportFriendAlbum(store, profile.id, id)
+      : Storage.exportAlbum(store, profile.id, id, profile.name);
+    if (!payload) { showToast("Album non trovato"); return; }
+    createShare("album", payload);
+  }
+
+  function parseToken(str) {
+    if (!str) return null;
+    try {
+      const url = new URL(str);
+      if (url.hash) return url.hash.replace("#", "").trim();
+      if (url.searchParams.get("token")) return url.searchParams.get("token")?.trim();
+    } catch {
+      // not a URL
+    }
+    return str.trim();
+  }
+
+  async function createShare(type, payload) {
+    try {
+      const res = await fetch(`${CLOUD_BASE}/create_share`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type, payload })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || "Errore creazione link");
+      elCloudLink.value = data.url;
+      elCloudModal.classList.remove("hidden");
+    } catch (e) {
+      showToast(e.message || "Errore cloud");
+    }
+  }
+
+  async function fetchShare(token) {
+    try {
+      const res = await fetch(`${CLOUD_BASE}/get_share?token=${encodeURIComponent(token)}`);
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || "Errore");
+      return data;
+    } catch (e) {
+      showToast(e.message || "Errore link");
+      return null;
+    }
+  }
+
+  function renderSharePreview(data) {
+    const { type, payload } = data;
+    const ownerName = payload.owner?.name || payload.profile?.name || "Sconosciuto";
+    const ownerId = (payload.owner?.id || payload.profile?.id || "").slice(0, 8);
+    let html = `<div><strong>Tipo:</strong> ${type === "profile" ? "Profilo" : "Album"}</div>`;
+    html += `<div><strong>Proprietario:</strong> ${ownerName}${ownerId ? " · " + ownerId : ""}</div>`;
+    if (type === "album") {
+      const stats = Storage.computeStats(payload.album.total, payload.stickers || {});
+      html += `<div><strong>Album:</strong> ${payload.album.name} (${payload.album.total})</div>`;
+      html += `<div><strong>Ce l’ho:</strong> ${stats.owned} • Mancanti: ${stats.missing} • Doppie: ${stats.dup}</div>`;
+    } else {
+      const albumsCount = Array.isArray(payload.albums) ? payload.albums.length : 0;
+      html += `<div><strong>Album inclusi:</strong> ${albumsCount}</div>`;
+    }
+    elSharePreviewBody.innerHTML = html;
+  }
+
+  async function importPayload(data) {
+    const { type, payload } = data;
+    if (type === "profile") {
+      const exists = store.profiles.some(p => p.id === payload.profile.id);
+      if (exists) {
+        const ok = confirm("Questo profilo esiste già. Sovrascrivere?");
+        if (!ok) return false;
+      }
+      const res = Storage.applyProfileImport(store, payload, exists);
+      if (!res.ok && res.reason === "exists") {
+        showToast("Profilo già presente.");
+        return false;
+      }
+      showToast("Profilo importato ✅");
+      return true;
+    }
+    if (type === "album") {
+      return importAlbumPayload(payload);
+    }
+    return false;
+  }
+
+  function importAlbumPayload(parsed) {
+    let name = parsed.album.name.trim();
+    if (parsed.owner?.id === profile.id) {
+      const existing = new Set(
+        store.albums
+          .filter(a => a.profileId === profile.id)
+          .map(a => a.name.toLowerCase())
+      );
+      while (existing.has(name.toLowerCase())) {
+        const next = prompt(`Esiste già un album chiamato '${name}'. Inserisci un nuovo nome per importarlo:`, name);
+        if (next === null) { return false; }
+        name = next.trim();
+        if (!name) continue;
+      }
+      const newAlbum = Storage.createAlbum(store, profile.id, name, parsed.album.total);
+      const track = store.tracks[profile.id][newAlbum.id];
+      track.stickers = {};
+      if (parsed.stickers && typeof parsed.stickers === "object") {
+        for (const k in parsed.stickers) {
+          const v = parsed.stickers[k];
+          if (Number.isInteger(v) && v >= 1) track.stickers[String(k)] = v;
+        }
+      }
+      track.filter = "ALL";
+      track.viewerSection = "ALL";
+      track.collapsedSections = {};
+      track.currentId = "1";
+      Storage.save(store);
+      showToast("Album importato correttamente ✅");
+      return true;
+    } else {
+      const ownerName = parsed.owner?.name || "Sconosciuto";
+      const existing = new Set(
+        store.friendAlbums
+          .filter(f => f.profileId === profile.id && f.ownerId === parsed.owner.id)
+          .map(f => f.album.name.toLowerCase())
+      );
+      while (existing.has(name.toLowerCase())) {
+        const next = prompt(`Hai già importato un album chiamato '${name}' di ${ownerName}. Inserisci un nuovo nome per salvarlo:`, name);
+        if (next === null) { return false; }
+        name = next.trim();
+        if (!name) continue;
+      }
+      Storage.addFriendAlbum(store, profile.id, {
+        ownerName,
+        ownerId: parsed.owner?.id || "",
+        album: { name, total: parsed.album.total },
+        stickers: parsed.stickers
+      });
+      Storage.save(store);
+      showToast("Album importato correttamente ✅");
+      return true;
+    }
+  }
+
   function triggerDownload(payload, filename) {
     const json = JSON.stringify(payload, null, 2);
     const blob = new Blob([json], { type: "application/json" });
@@ -454,6 +676,25 @@
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
+  }
+
+  if (elBtnCloseCloud) {
+    elBtnCloseCloud.onclick = () => elCloudModal.classList.add("hidden");
+  }
+  if (elBtnCopyCloud) {
+    elBtnCopyCloud.onclick = async () => {
+      try {
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(elCloudLink.value);
+        } else {
+          elCloudLink.select();
+          document.execCommand("copy");
+        }
+        showToast("Link copiato");
+      } catch {
+        showToast("Copia non riuscita");
+      }
+    };
   }
 
   renderAlbums();
