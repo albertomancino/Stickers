@@ -50,12 +50,30 @@
   const elStatDup = document.getElementById("statDup");
   const elProgressFill = document.getElementById("progressFill");
   const elProgressText = document.getElementById("progressText");
+  const elExport = document.getElementById("btnExport");
 
   document.getElementById("btnBack").onclick = () => window.location.href = "dashboard.html";
   document.getElementById("btnLogout").onclick = () => {
     Storage.clearActiveProfile(store);
     window.location.href = "index.html";
   };
+  if (elExport) {
+    elExport.onclick = () => {
+      const payload = Storage.exportAlbum(store, profile.id, album.id, profile.name);
+      if (!payload) return;
+      const json = JSON.stringify(payload, null, 2);
+      const fname = Storage.sanitizeFileName(`${album.name}_${profile.name}_panini.json`);
+      const blob = new Blob([json], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fname;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    };
+  }
 
   // catalog is embedded locally, init immediately
   initWithCatalog();

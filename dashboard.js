@@ -18,6 +18,8 @@
   const elLogout = document.getElementById("btnLogout");
   const elCreateAlbum = document.getElementById("btnCreateAlbum");
   const elToast = document.getElementById("toast");
+  const elImportBtn = document.getElementById("btnImportAlbum");
+  const elImportFile = document.getElementById("importFile");
 
   elWelcome.textContent = `Ciao ${profile.name}`;
   const params = new URLSearchParams(window.location.search);
@@ -76,6 +78,56 @@
     Storage.createAlbum(store, profile.id, elAlbumName.value);
     elAlbumName.value = "";
     renderAlbums();
+  };
+
+  elImportBtn.onclick = () => {
+    if (elImportFile) elImportFile.click();
+  };
+
+  elImportFile.onchange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(reader.result);
+        const check = Storage.validateImport(parsed);
+        if (!check.ok) {
+          showToast(check.error || "Import fallita.");
+          elImportFile.value = "";
+          return;
+        }
+        let name = parsed.album.name.trim();
+        const existingNames = new Set(store.albums.filter(a => a.profileId === profile.id).map(a => a.name.toLowerCase()));
+        while (existingNames.has(name.toLowerCase())) {
+          const next = prompt(`Esiste già un album chiamato '${name}'. Inserisci un nuovo nome per importarlo:`, name);
+          if (next === null) { elImportFile.value = ""; return; }
+          name = next.trim();
+          if (!name) continue;
+        }
+        const newAlbum = Storage.createAlbum(store, profile.id, name, parsed.album.total);
+        const track = store.tracks[profile.id][newAlbum.id];
+        track.stickers = {};
+        if (parsed.stickers && typeof parsed.stickers === "object") {
+          for (const k in parsed.stickers) {
+            const v = parsed.stickers[k];
+            if (Number.isInteger(v) && v >= 1) track.stickers[String(k)] = v;
+          }
+        }
+        track.filter = "ALL";
+        track.viewerSection = "ALL";
+        track.collapsedSections = {};
+        track.currentId = "1";
+        Storage.save(store);
+        showToast("Album importato ✅");
+        renderAlbums();
+      } catch (err) {
+        showToast("Errore durante l'import.");
+      } finally {
+        elImportFile.value = "";
+      }
+    };
+    reader.readAsText(file);
   };
 
   elLogout.onclick = () => {

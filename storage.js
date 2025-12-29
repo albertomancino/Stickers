@@ -55,6 +55,45 @@ const Storage = {
     return album;
   },
 
+  exportAlbum(store, profileId, albumId, profileName) {
+    const album = store.albums.find(a => a.id === albumId && a.profileId === profileId);
+    if (!album) return null;
+    const stickers = (store.tracks?.[profileId]?.[albumId]?.stickers) || {};
+    const cleaned = {};
+    for (const k in stickers) {
+      const v = stickers[k];
+      if (Number.isInteger(v) && v >= 1) cleaned[k] = v;
+    }
+    return {
+      schema: "panini-trade/v1",
+      exportedAt: new Date().toISOString(),
+      owner: { name: profileName || "" },
+      album: { name: album.name, total: album.total },
+      catalogHint: { count: STICKER_CATALOG?.length || 0 },
+      stickers: cleaned
+    };
+  },
+
+  validateImport(data) {
+    if (!data || typeof data !== "object") return { ok: false, error: "JSON non valido." };
+    if (data.schema !== "panini-trade/v1") return { ok: false, error: "Schema non supportato." };
+    if (!data.album || typeof data.album.name !== "string" || !data.album.name.trim()) return { ok: false, error: "Nome album mancante." };
+    if (!Number.isInteger(data.album.total) || data.album.total <= 0) return { ok: false, error: "Totale album non valido." };
+    if (!data.stickers || typeof data.stickers !== "object") return { ok: false, error: "Stickers non valido." };
+    for (const k in data.stickers) {
+      const v = data.stickers[k];
+      if (!Number.isInteger(v) || v < 1) return { ok: false, error: "Valori sticker non validi." };
+    }
+    return { ok: true };
+  },
+
+  sanitizeFileName(name) {
+    return name
+      .replace(/\s+/g, "_")
+      .replace(/[^a-zA-Z0-9_.-]/g, "")
+      .slice(0, 80) || "album";
+  },
+
   ensureTrack(store, profileId, albumId, opts) {
     const defaultStickerId = opts?.defaultStickerId || "1";
     const validIds = opts?.validIds; // Set or null
