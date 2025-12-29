@@ -19,7 +19,7 @@
   const friendId = params.get("friendId");
 
   if (!albumId && !friendId) {
-    window.location.href = "dashboard.html";
+    window.location.href = "./dashboard.html";
     return;
   }
 
@@ -27,7 +27,7 @@
     ? store.friendAlbums.find(a => a.id === friendId && a.profileId === profile.id)
     : store.albums.find(a => a.id === albumId && a.profileId === profile.id);
   if (!album) {
-    window.location.href = "dashboard.html?msg=album_deleted";
+    window.location.href = "./dashboard.html?msg=album_deleted";
     return;
   }
 
@@ -58,10 +58,10 @@
   const elExport = document.getElementById("btnExport");
   const elFriendBanner = document.getElementById("friendBanner");
 
-  document.getElementById("btnBack").onclick = () => window.location.href = "dashboard.html";
+  document.getElementById("btnBack").onclick = () => window.location.href = "./dashboard.html";
   document.getElementById("btnLogout").onclick = () => {
     Storage.clearActiveProfile(store);
-    window.location.href = "index.html";
+    window.location.href = "./index.html";
   };
   if (elExport) {
     elExport.onclick = () => {

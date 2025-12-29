@@ -21,7 +21,7 @@
   const toastEl = document.getElementById("toast");
   let proposal = { give: {}, receive: {} };
 
-  document.getElementById("btnBackDash").onclick = () => window.location.href = "dashboard.html";
+  document.getElementById("btnBackDash").onclick = () => window.location.href = "./dashboard.html";
   document.getElementById("btnCopyProposal").onclick = () => copyProposal();
   document.getElementById("btnExportProposal").onclick = () => exportProposal();
   document.getElementById("btnResetProposal").onclick = () => { proposal = { give:{}, receive:{} }; persistProposal(); render(); };

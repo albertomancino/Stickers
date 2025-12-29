@@ -1,14 +1,14 @@
 (() => {
   const store = Storage.load();
   if (!store.activeProfileId) {
-    window.location.href = "index.html";
+    window.location.href = "./index.html";
     return;
   }
 
   const profile = store.profiles.find(p => p.id === store.activeProfileId);
   if (!profile) {
     Storage.clearActiveProfile(store);
-    window.location.href = "index.html";
+    window.location.href = "./index.html";
     return;
   }
 

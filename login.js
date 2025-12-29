@@ -21,7 +21,7 @@
   elLogin.onclick = () => {
     if (!elSelect.value) return;
     Storage.setActiveProfile(store, elSelect.value);
-    window.location.href = "dashboard.html";
+    window.location.href = "./dashboard.html";
   };
 
   elCreate.onclick = () => {
@@ -29,7 +29,7 @@
     elNewName.value = "";
     renderProfiles();
     Storage.setActiveProfile(store, profile.id);
-    window.location.href = "dashboard.html";
+    window.location.href = "./dashboard.html";
   };
 
   renderProfiles();
