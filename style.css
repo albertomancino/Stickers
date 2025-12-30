@@ -100,10 +100,28 @@ button:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 18p
 .compare-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
 .compare-list .compare-row { align-items: center; }
 .checkbox-line { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: var(--text); }
+.compare-shell { min-height: 100vh; display: flex; flex-direction: column; gap: 12px; }
+.compare-top { flex: 0 0 auto; min-height: 0; }
+.compare-top * { min-height: 0; }
+.tradables-card { padding: 12px; border-radius: 16px; background: var(--surface); border: 1px solid var(--border); box-shadow: 0 6px 18px rgba(0,0,0,0.05); }
+.tradables-scroll { max-height: 55vh; overflow: auto; }
+@media (max-width: 768px) {
+  .tradables-scroll { max-height: 45vh; }
+}
 .banner { padding: 10px; border-radius: 10px; background: #fff7ed; color: #9a3412; border: 1px solid #fed7aa; }
-.proposal-card { position: sticky; bottom: 0; }
 .proposal-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
-.proposal-card .list-row { box-shadow: none; }
+.proposal-sheet { border: 1px solid var(--border); border-radius: 16px; background: var(--surface); box-shadow: 0 10px 30px rgba(0,0,0,0.08); overflow: hidden; }
+.proposal-sheet-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-bottom: 1px solid var(--border); cursor: pointer; }
+.proposal-sheet-title h3 { margin: 0; }
+.proposal-sheet-meta { font-size: 13px; color: var(--muted); margin-top: 4px; }
+.proposal-sheet-actions { display: flex; gap: 6px; align-items: center; }
+#toggleProposal { transition: transform 0.2s ease; }
+#toggleProposal::before { content: "▴"; }
+.proposal-sheet.expanded #toggleProposal::before { content: "▾"; }
+.proposal-sheet.collapsed #toggleProposal { transform: rotate(0deg); }
+.proposal-sheet.expanded #toggleProposal { transform: rotate(180deg); }
+.proposal-sheet-body { padding: 12px 16px 16px; max-height: 35vh; overflow: auto; display: block; }
+.proposal-sheet.collapsed .proposal-sheet-body { display: none; }
 
 /* Album counters + progress */
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 12px; }
@@ -134,6 +152,13 @@ button:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 18p
 .row-actions { flex-wrap: wrap; justify-content: flex-end; }
 .row-flash { animation: rowFlash 0.25s ease; }
 @keyframes rowFlash { from { background: #e0f2fe; } to { background: transparent; } }
+
+.container { width: 100%; margin: 0 auto; padding: 0 16px; }
+.container-narrow { max-width: 980px; }
+@media (max-width: 768px) {
+  .container { padding: 0 12px; }
+  .container-narrow { max-width: 640px; }
+}
 
 /* mode switch */
 .mode-switch { display: flex; gap: 8px; margin-bottom: 10px; }

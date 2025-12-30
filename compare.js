@@ -16,21 +16,50 @@
   const friendOwner = document.getElementById("friendOwner");
   const listAsk = document.getElementById("listAsk");
   const listOffer = document.getElementById("listOffer");
+  const tradablesRoot = document.getElementById("tradablesScroll");
   const warningBanner = document.getElementById("warningBanner");
   const searchFilter = document.getElementById("searchFilter");
   const toggleUseful = document.getElementById("toggleUseful");
+  const proposalSheet = document.getElementById("proposalSheet");
+  const proposalHeader = document.getElementById("proposalHeader");
+  const proposalBody = document.getElementById("proposalBody");
+  const toggleProposalBtn = document.getElementById("toggleProposal");
+  const giveCountEl = document.getElementById("giveCount");
+  const recvCountEl = document.getElementById("recvCount");
+  const proposalGiveList = document.getElementById("proposalGiveList");
+  const proposalRecvList = document.getElementById("proposalRecvList");
   const toastEl = document.getElementById("toast");
   let proposal = { give: {}, receive: {} };
   const USEFUL_KEY = "tradeFilterUsefulOnly";
+  const PROPOSAL_EXPANDED_KEY = "proposalExpanded";
 
   document.getElementById("btnBackDash").onclick = () => window.location.href = "./dashboard.html";
   document.getElementById("btnCopyProposal").onclick = () => copyProposal();
   document.getElementById("btnExportProposal").onclick = () => exportProposal();
-  document.getElementById("btnResetProposal").onclick = () => { proposal = { give:{}, receive:{} }; persistProposal(); render(); };
+  document.getElementById("btnResetProposal").onclick = () => {
+    proposal = { give:{}, receive:{} };
+    persistProposal();
+    render();
+  };
+  if (proposalHeader) {
+    proposalHeader.addEventListener("click", toggleProposalSheet);
+    proposalHeader.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleProposalSheet(); }
+    });
+  }
+  if (toggleProposalBtn) {
+    toggleProposalBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleProposalSheet();
+    });
+  }
 
   myAlbumSelect.onchange = render;
   friendAlbumSelect.onchange = render;
   searchFilter.oninput = render;
+  if (tradablesRoot) {
+    tradablesRoot.addEventListener("change", handleTradableChange);
+  }
   if (toggleUseful) {
     const saved = localStorage.getItem(USEFUL_KEY);
     const def = saved === null ? true : saved === "true";
@@ -147,8 +176,8 @@
             <div class="row-meta">${it.meta}</div>
           </div>
           <div class="row-actions">
-            <input type="checkbox" class="proposal-check" data-kind="${kind}" data-id="${it.id}" ${checked ? "checked" : ""}/>
-            <select class="proposal-qty" data-kind="${kind}" data-id="${it.id}" ${checked ? "" : "disabled"}>
+            <input type="checkbox" class="proposal-check" data-side="${kind}" data-id="${it.id}" ${checked ? "checked" : ""}/>
+            <select class="proposal-qty" data-side="${kind}" data-id="${it.id}" ${checked ? "" : "disabled"}>
               ${options}
             </select>
             <div class="badge ${kind === "receive" ? "missing" : "dup"}">x${it.copies}</div>
@@ -157,32 +186,6 @@
       `;
     });
     container.innerHTML = rows.join("");
-    container.querySelectorAll(".proposal-check").forEach(inp => {
-      inp.onchange = () => {
-        const id = inp.dataset.id;
-        const kind = inp.dataset.kind;
-        if (inp.checked) {
-          const max = getMaxFor(kind, id);
-          proposal[kind][id] = { qty: Math.min(1, max) || 1 };
-          container.querySelector(`.proposal-qty[data-id="${id}"][data-kind="${kind}"]`).disabled = false;
-        } else {
-          delete proposal[kind][id];
-          container.querySelector(`.proposal-qty[data-id="${id}"][data-kind="${kind}"]`).disabled = true;
-        }
-        persistProposal();
-        renderProposal();
-      };
-    });
-    container.querySelectorAll(".proposal-qty").forEach(sel => {
-      sel.onchange = () => {
-        const id = sel.dataset.id;
-        const kind = sel.dataset.kind;
-        if (!proposal[kind][id]) return;
-        proposal[kind][id].qty = parseInt(sel.value, 10) || 1;
-        persistProposal();
-        renderProposal();
-      };
-    });
   }
 
   function getMaxFor(kind, id) {
@@ -220,17 +223,22 @@
   }
 
   function renderProposal() {
-    const giveList = document.getElementById("proposalGive");
-    const recList = document.getElementById("proposalReceive");
+    const giveList = proposalGiveList;
+    const recList = proposalRecvList;
     const myData = getCurrentMyAlbum();
     const friend = getCurrentFriendAlbum();
+    if (!giveList || !recList) return;
     if (!myData || !friend) {
       giveList.innerHTML = '<div class="muted">Seleziona album</div>';
       recList.innerHTML = '<div class="muted">Seleziona album</div>';
+      if (giveCountEl) giveCountEl.textContent = "0";
+      if (recvCountEl) recvCountEl.textContent = "0";
       return;
     }
     const giveItems = Object.keys(proposal.give).map(id => ({ id, qty: proposal.give[id].qty }));
     const recItems = Object.keys(proposal.receive).map(id => ({ id, qty: proposal.receive[id].qty }));
+    if (giveCountEl) giveCountEl.textContent = giveItems.length;
+    if (recvCountEl) recvCountEl.textContent = recItems.length;
     giveList.innerHTML = giveItems.length
       ? giveItems.map(it => renderProposalRow(it, "dup")).join("")
       : '<div class="muted">Nessuna selezione</div>';
@@ -309,6 +317,20 @@ Owner amico: ${friend.ownerName || "?"}${friend.ownerId ? " ("+friend.ownerId.sl
     URL.revokeObjectURL(url);
   }
 
+  function toggleProposalSheet() {
+    if (!proposalSheet) return;
+    const expanded = proposalSheet.classList.contains("collapsed");
+    setProposalExpanded(expanded);
+  }
+
+  function setProposalExpanded(expanded) {
+    if (!proposalSheet) return;
+    proposalSheet.classList.toggle("expanded", expanded);
+    proposalSheet.classList.toggle("collapsed", !expanded);
+    if (proposalHeader) proposalHeader.setAttribute("aria-expanded", String(expanded));
+    try { localStorage.setItem(PROPOSAL_EXPANDED_KEY, expanded ? "1" : "0"); } catch {}
+  }
+
   function persistProposal() {
     try {
       const key = proposalKey();
@@ -375,6 +397,39 @@ Owner amico: ${friend.ownerName || "?"}${friend.ownerId ? " ("+friend.ownerId.sl
     toastEl.classList.remove("hidden");
     setTimeout(() => toastEl.classList.add("hidden"), 2000);
   }
+
+  function handleTradableChange(e) {
+    const target = e.target;
+    if (!target) return;
+    const side = target.dataset.side;
+    const id = target.dataset.id;
+    if (!side || !id) return;
+    if (target.matches("input[type='checkbox']")) {
+      if (target.checked) {
+        const max = getMaxFor(side, id);
+        proposal[side][id] = { qty: Math.min(1, max) || 1 };
+        const select = document.querySelector(`.proposal-qty[data-side="${side}"][data-id="${id}"]`);
+        if (select) select.disabled = false;
+      } else {
+        delete proposal[side][id];
+        const select = document.querySelector(`.proposal-qty[data-side="${side}"][data-id="${id}"]`);
+        if (select) select.disabled = true;
+      }
+      persistProposal();
+      renderProposal();
+    }
+    if (target.matches("select.proposal-qty")) {
+      if (!proposal[side][id]) return;
+      proposal[side][id].qty = parseInt(target.value, 10) || 1;
+      persistProposal();
+      renderProposal();
+    }
+  }
+
+  // restore proposal expanded state
+  const savedExpanded = (() => { try { return localStorage.getItem(PROPOSAL_EXPANDED_KEY); } catch { return null; } })();
+  if (savedExpanded === "1") setProposalExpanded(true);
+  else setProposalExpanded(false);
 
   initSelects();
   loadProposal();

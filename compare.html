@@ -9,78 +9,88 @@
   <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
-  <main class="wrap">
-    <header class="top">
-      <h1>Confronta album</h1>
-      <div class="top-actions">
-        <button id="btnBackDash" class="ghost small-btn">← Dashboard</button>
-      </div>
-    </header>
+  <div class="compare-shell">
+    <div class="container container-narrow">
+      <header class="top">
+        <h1>Confronta album</h1>
+        <div class="top-actions">
+          <button id="btnBackDash" class="ghost small-btn">← Dashboard</button>
+        </div>
+      </header>
 
-    <section class="card">
-      <div class="compare-selects">
-        <div class="field">
-          <label for="myAlbumSelect">Mio album</label>
-          <select id="myAlbumSelect"></select>
-        </div>
-        <div class="field">
-          <label for="friendAlbumSelect">Album amico</label>
-          <select id="friendAlbumSelect"></select>
-          <div class="muted small" id="friendOwner"></div>
-        </div>
-        <div class="field">
-          <label class="checkbox-line"><input type="checkbox" id="toggleUseful" checked /> Mostra solo scambi utili</label>
-        </div>
-        <div class="field">
-          <label for="searchFilter">Filtro</label>
-          <input id="searchFilter" type="text" placeholder="Cerca numero o titolo" />
-        </div>
-      </div>
-      <div id="warningBanner" class="banner hidden">Attenzione: album con totali diversi. Confronto parziale.</div>
-    </section>
-
-    <section class="card compare-grid">
-      <div>
-        <div class="compare-header">
-          <div>
-            <h3>Le mie doppie (posso dare)</h3>
-            <div id="offerCounter" class="muted small"></div>
+      <div class="compare-top card">
+        <div class="compare-selects">
+          <div class="field">
+            <label for="myAlbumSelect">Mio album</label>
+            <select id="myAlbumSelect"></select>
+          </div>
+          <div class="field">
+            <label for="friendAlbumSelect">Album amico</label>
+            <select id="friendAlbumSelect"></select>
+            <div class="muted small" id="friendOwner"></div>
+          </div>
+          <div class="field">
+            <label class="checkbox-line"><input type="checkbox" id="toggleUseful" checked /> Mostra solo scambi utili</label>
+          </div>
+          <div class="field">
+            <label for="searchFilter">Filtro</label>
+            <input id="searchFilter" type="text" placeholder="Cerca numero o titolo" />
           </div>
         </div>
-        <div id="listOffer" class="list compare-list"></div>
+        <div id="warningBanner" class="banner hidden">Attenzione: album con totali diversi. Confronto parziale.</div>
       </div>
-      <div>
-        <div class="compare-header">
+
+      <section class="card tradables-card">
+        <div id="tradablesScroll" class="tradables-scroll compare-grid compare-lists">
           <div>
-            <h3>Le doppie dell'amico (può dare)</h3>
-            <div id="askCounter" class="muted small"></div>
+            <div class="compare-header">
+              <div>
+                <h3>Le mie doppie (posso dare)</h3>
+                <div id="offerCounter" class="muted small"></div>
+              </div>
+            </div>
+            <div id="listOffer" class="list compare-list"></div>
+          </div>
+          <div>
+            <div class="compare-header">
+              <div>
+                <h3>Le doppie dell'amico (può dare)</h3>
+                <div id="askCounter" class="muted small"></div>
+              </div>
+            </div>
+            <div id="listAsk" class="list compare-list"></div>
           </div>
         </div>
-        <div id="listAsk" class="list compare-list"></div>
-      </div>
-    </section>
+      </section>
 
-    <section class="card proposal-card">
-      <div class="compare-header">
-        <h3>Proposta di scambio</h3>
-        <div class="action-buttons">
-          <button id="btnCopyProposal" class="ghost small-btn">Copia proposta</button>
-          <button id="btnExportProposal" class="ghost small-btn">Esporta proposta</button>
-          <button id="btnResetProposal" class="btn-danger small-btn outline">Reset</button>
+      <section class="card proposal-sheet collapsed" id="proposalSheet">
+        <div id="proposalHeader" class="proposal-sheet-header" role="button" tabindex="0" aria-expanded="false">
+          <div class="proposal-sheet-title">
+            <h3>Proposta di scambio</h3>
+            <div class="proposal-sheet-meta">Io do: <span id="giveCount">0</span> · Lui dà: <span id="recvCount">0</span></div>
+          </div>
+          <div class="proposal-sheet-actions">
+            <button id="btnCopyProposal" class="ghost small-btn">Copia</button>
+            <button id="btnExportProposal" class="ghost small-btn">Esporta</button>
+            <button id="btnResetProposal" class="btn-danger small-btn outline">Reset</button>
+            <button id="toggleProposal" type="button" class="ghost small-btn" aria-label="Espandi/Riduci proposta"></button>
+          </div>
         </div>
-      </div>
-      <div class="proposal-grid">
-        <div>
-          <h4>Io do</h4>
-          <div id="proposalGive" class="list compare-list"></div>
+        <div id="proposalBody" class="proposal-sheet-body">
+          <div class="proposal-grid">
+            <div>
+              <h4>Io do</h4>
+              <div id="proposalGiveList" class="list compare-list"></div>
+            </div>
+            <div>
+              <h4>Lui dà</h4>
+              <div id="proposalRecvList" class="list compare-list"></div>
+            </div>
+          </div>
         </div>
-        <div>
-          <h4>Lui dà</h4>
-          <div id="proposalReceive" class="list compare-list"></div>
-        </div>
-      </div>
-    </section>
-  </main>
+      </section>
+    </div>
+  </div>
 
   <div id="toast" class="toast hidden"></div>
 
