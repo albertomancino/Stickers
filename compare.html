@@ -29,6 +29,9 @@
           <div class="muted small" id="friendOwner"></div>
         </div>
         <div class="field">
+          <label class="checkbox-line"><input type="checkbox" id="toggleUseful" checked /> Mostra solo scambi utili</label>
+        </div>
+        <div class="field">
           <label for="searchFilter">Filtro</label>
           <input id="searchFilter" type="text" placeholder="Cerca numero o titolo" />
         </div>
@@ -39,13 +42,19 @@
     <section class="card compare-grid">
       <div>
         <div class="compare-header">
-          <h3>Le mie doppie (posso dare)</h3>
+          <div>
+            <h3>Le mie doppie (posso dare)</h3>
+            <div id="offerCounter" class="muted small"></div>
+          </div>
         </div>
         <div id="listOffer" class="list compare-list"></div>
       </div>
       <div>
         <div class="compare-header">
-          <h3>Le doppie dell'amico (può dare)</h3>
+          <div>
+            <h3>Le doppie dell'amico (può dare)</h3>
+            <div id="askCounter" class="muted small"></div>
+          </div>
         </div>
         <div id="listAsk" class="list compare-list"></div>
       </div>

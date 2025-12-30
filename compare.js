@@ -18,8 +18,10 @@
   const listOffer = document.getElementById("listOffer");
   const warningBanner = document.getElementById("warningBanner");
   const searchFilter = document.getElementById("searchFilter");
+  const toggleUseful = document.getElementById("toggleUseful");
   const toastEl = document.getElementById("toast");
   let proposal = { give: {}, receive: {} };
+  const USEFUL_KEY = "tradeFilterUsefulOnly";
 
   document.getElementById("btnBackDash").onclick = () => window.location.href = "./dashboard.html";
   document.getElementById("btnCopyProposal").onclick = () => copyProposal();
@@ -29,6 +31,16 @@
   myAlbumSelect.onchange = render;
   friendAlbumSelect.onchange = render;
   searchFilter.oninput = render;
+  if (toggleUseful) {
+    const saved = localStorage.getItem(USEFUL_KEY);
+    const def = saved === null ? true : saved === "true";
+    toggleUseful.checked = def;
+    toggleUseful.onchange = () => {
+      localStorage.setItem(USEFUL_KEY, toggleUseful.checked ? "true" : "false");
+      pruneHiddenSelections();
+      render();
+    };
+  }
 
   function initSelects() {
     myAlbumSelect.innerHTML = "";
@@ -84,7 +96,10 @@
     const ask = [];
     const offer = [];
     const q = searchFilter.value.toLowerCase().trim();
+    const usefulOnly = toggleUseful ? toggleUseful.checked : true;
 
+    let totalOffer = 0;
+    let totalAsk = 0;
     for (const item of STICKER_CATALOG) {
       const id = String(item.No);
       const myCopies = myData.track.stickers[id] || 0;
@@ -93,20 +108,28 @@
       const meta = [item.Section, item.Type].filter(Boolean).join(" · ");
       const hay = `${id} ${title}`.toLowerCase();
       if (q && !hay.includes(q)) continue;
-      if (myCopies >= 2) {
-        offer.push({ id, title, meta, copies: myCopies - 1 });
-      }
-      if (friendCopies >= 2) {
-        ask.push({ id, title, meta, copies: friendCopies - 1 });
+      const canOffer = myCopies >= 2;
+      const canAsk = friendCopies >= 2;
+      if (canOffer) totalOffer++;
+      if (canAsk) totalAsk++;
+      if (usefulOnly) {
+        if (canOffer && friendCopies === 0) offer.push({ id, title, meta, copies: myCopies - 1 });
+        if (canAsk && myCopies === 0) ask.push({ id, title, meta, copies: friendCopies - 1 });
+      } else {
+        if (canOffer) offer.push({ id, title, meta, copies: myCopies - 1 });
+        if (canAsk) ask.push({ id, title, meta, copies: friendCopies - 1 });
       }
     }
 
-    renderList(listOffer, offer, "give");
-    renderList(listAsk, ask, "receive");
+    renderList(listOffer, offer, "give", totalOffer);
+    renderList(listAsk, ask, "receive", totalAsk);
     renderProposal();
   }
 
-  function renderList(container, items, kind) {
+  function renderList(container, items, kind, total) {
+    const counterId = kind === "give" ? "offerCounter" : "askCounter";
+    const counterEl = document.getElementById(counterId);
+    if (counterEl) counterEl.textContent = `Figurine mostrate: ${items.length} / ${total || 0}`;
     if (!items.length) {
       container.innerHTML = '<div class="muted">Nessun elemento</div>';
       return;
@@ -311,6 +334,40 @@ Owner amico: ${friend.ownerName || "?"}${friend.ownerId ? " ("+friend.ownerId.sl
     const friend = getCurrentFriendAlbum();
     if (!myData || !friend) return null;
     return `proposal:${myData.album.id}:${friend.id}`;
+  }
+
+  function pruneHiddenSelections() {
+    // remove selections no longer visible under filter
+    const myData = getCurrentMyAlbum();
+    const friend = getCurrentFriendAlbum();
+    if (!myData || !friend) return;
+    const usefulOnly = toggleUseful ? toggleUseful.checked : true;
+    let removed = false;
+    const myCopies = myData.track.stickers;
+    const friendCopies = friend.stickers;
+
+    for (const id of Object.keys(proposal.give)) {
+      const mine = myCopies[id] || 0;
+      const theirs = friendCopies[id] || 0;
+      const visible = usefulOnly ? (mine >= 2 && theirs === 0) : (mine >= 2);
+      if (!visible) {
+        delete proposal.give[id];
+        removed = true;
+      }
+    }
+    for (const id of Object.keys(proposal.receive)) {
+      const mine = myCopies[id] || 0;
+      const theirs = friendCopies[id] || 0;
+      const visible = usefulOnly ? (theirs >= 2 && mine === 0) : (theirs >= 2);
+      if (!visible) {
+        delete proposal.receive[id];
+        removed = true;
+      }
+    }
+    if (removed) {
+      persistProposal();
+      showToast("Alcune selezioni sono state rimosse perché non compatibili con il filtro");
+    }
   }
 
   function showToast(msg) {

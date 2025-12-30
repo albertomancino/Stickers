@@ -99,6 +99,7 @@ button:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 18p
 .compare-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
 .compare-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
 .compare-list .compare-row { align-items: center; }
+.checkbox-line { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: var(--text); }
 .banner { padding: 10px; border-radius: 10px; background: #fff7ed; color: #9a3412; border: 1px solid #fed7aa; }
 .proposal-card { position: sticky; bottom: 0; }
 .proposal-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
