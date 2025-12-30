@@ -24,10 +24,10 @@
   const proposalHeader = document.getElementById("proposalHeader");
   const proposalBody = document.getElementById("proposalBody");
   const toggleProposalBtn = document.getElementById("toggleProposal");
-  const giveCountEl = document.getElementById("giveCount");
-  const recvCountEl = document.getElementById("recvCount");
-  const proposalGiveList = document.getElementById("proposalGiveList");
-  const proposalRecvList = document.getElementById("proposalRecvList");
+  let giveCountEl = document.getElementById("giveCount");
+  let recvCountEl = document.getElementById("recvCount");
+  let proposalGiveList = document.getElementById("proposalGiveList") || document.getElementById("proposalGive");
+  let proposalRecvList = document.getElementById("proposalRecvList") || document.getElementById("proposalReceive");
   const toastEl = document.getElementById("toast");
   let proposal = { give: {}, receive: {} };
   const USEFUL_KEY = "tradeFilterUsefulOnly";
@@ -222,7 +222,15 @@
     return `${a}-${b}`;
   }
 
+  function refreshProposalTargets() {
+    proposalGiveList = document.getElementById("proposalGiveList") || document.getElementById("proposalGive");
+    proposalRecvList = document.getElementById("proposalRecvList") || document.getElementById("proposalReceive");
+    giveCountEl = document.getElementById("giveCount");
+    recvCountEl = document.getElementById("recvCount");
+  }
+
   function renderProposal() {
+    refreshProposalTargets();
     const giveList = proposalGiveList;
     const recList = proposalRecvList;
     const myData = getCurrentMyAlbum();
